@@ -187,7 +187,7 @@ The following list provides summary information about the different deployment p
 
 |     |     |     |     |     |     |     |
 | --- | --- | --- | --- | --- | --- | --- |
-| Deployment methods |     |     |     |     |     |     |
+| Deployment methods                      |
 | **Method** | **Impact of failed deployment** | **Deploy time** | **Zero downtime** | **No DNS change** | ****Rollback process**** | ******Code deployed to****** |
 | **All at once** | Downtime | 🕛  | No  | Yes | Manual redeploy | Existing instances |
 | **Rolling** | Single batch out of service; any successful batches before failure running new application version | 🕛🕛† | Yes | Yes | Manual redeploy | Existing instances |
@@ -199,3 +199,121 @@ The following list provides summary information about the different deployment p
 † Varies depending on batch size.
 
 †† Varies depending on evaluation time option setting.
+
+
+## How rolling deployments work
+
+When processing a batch, Elastic Beanstalk detaches all instances in the batch from the load balancer, deploys the new application version, and then reattaches the instances. If you enable connection draining, Elastic Beanstalk drains existing connections from the Amazon EC2 instances in each batch before beginning the deployment.
+
+After reattaching the instances in a batch to the load balancer, Elastic Load Balancing waits until they pass a minimum number of Elastic Load Balancing health checks (the Healthy check count threshold value), and then starts routing traffic to them. If no health check URL is configured, this can happen very quickly, because an instance will pass the health check as soon as it can accept a TCP connection. If a health check URL is configured, the load balancer doesn't route traffic to the updated instances until they return a `200 OK` status code in response to an `HTTP GET` request to the health check URL.
+
+Elastic Beanstalk waits until all instances in a batch are healthy before moving on to the next batch. With basic health reporting, instance health depends on the Elastic Load Balancing health check status. When all instances in the batch pass enough health checks to be considered healthy by Elastic Load Balancing, the batch is complete. If enhanced health reporting is enabled, Elastic Beanstalk considers several other factors, including the result of incoming requests. With enhanced health reporting, all instances must pass 12 consecutive health checks with an OK status within two minutes for web server environments, and 18 health checks within three minutes for worker environments.
+
+If a batch of instances does not become healthy within the command timeout, the deployment fails. After a failed deployment, check the health of the instances in your environment for information about the cause of the failure. Then perform another deployment with a fixed or known good version of your application to roll back.
+
+`If a deployment fails after one or more batches completed successfully`, the completed batches run the new version of your application while any pending batches `continue to run the old version.` You can identify the version running on the instances in your environment on the health page in the console. This page displays the `deployment ID of the most recent deployment that executed on each instance in your environment`. If you terminate instances from the failed deployment, Elastic Beanstalk replaces them with instances running the application version from the most recent successful deployment.
+
+## How traffic-splitting deployments work
+
+Traffic-splitting deployments allow you to perform canary testing. You direct some incoming client traffic to your new application version to verify the application's health before committing to the new version and directing all traffic to it.
+
+During a traffic-splitting deployment, Elastic Beanstalk creates a new set of instances in a separate temporary Auto Scaling group. Elastic Beanstalk then instructs the load balancer to direct a certain percentage of your environment's incoming traffic to the new instances. Then, for a configured amount of time, Elastic Beanstalk tracks the health of the new set of instances. If all is well, Elastic Beanstalk shifts remaining traffic to the new instances and attaches them to the environment's original Auto Scaling group, replacing the old instances. Then Elastic Beanstalk cleans up—terminates the old instances and removes the temporary Auto Scaling group.
+
+> **Note**
+>
+>The environment's capacity doesn't change during a traffic-splitting deployment. Elastic Beanstalk launches the same number of instances in the temporary Auto Scaling group as there are in the original Auto Scaling group at the time the deployment starts. It then maintains a constant number of instances in both Auto Scaling groups for the deployment duration. Take this fact into account when configuring the environment's traffic splitting evaluation time.
+
+Rolling back the deployment to the previous application version is quick and doesn't impact service to client traffic. If the new instances don't pass health checks, or if you choose to abort the deployment, Elastic Beanstalk moves traffic back to the old instances and terminates the new ones. You can abort any deployment by using the environment overview page in the Elastic Beanstalk console, and choosing **Abort current operation** in **Environment actions**. You can also call the `AbortEnvironmentUpdate` API or the equivalent AWS CLI command.
+
+Traffic-splitting deployments require an Application Load Balancer. Elastic Beanstalk uses this load balancer type by default when you create your environment using the Elastic Beanstalk console or the EB CLI.
+
+## Blue/Green deployments with Elastic Beanstalk
+Because AWS Elastic Beanstalk performs an in-place update when you update your application versions, your application might become unavailable to users for a short period of time. To avoid this, perform a blue/green deployment. To do this, deploy the new version to a separate environment, and then swap the CNAMEs of the two environments to redirect traffic to the new version instantly.
+
+A blue/green deployment is also required if you want to update an environment to an incompatible platform version. For more information, see [Updating your Elastic Beanstalk environment's platform version](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.platform.upgrade.html).
+
+Blue/green deployments require that your environment runs independently of your production database, if your application uses one. If your environment includes a database that Elastic Beanstalk created on your behalf, the database and connection of the environment isn't preserved unless you take specific actions. If you have a database that you want to retain, use one of the Elastic Beanstalk [database lifecycle](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.managing.db.html#environments-cfg-rds-lifecycle) options. You can choose the Retain option to keep the database and environment operational after decoupling the database. For more information see Database lifecycle in the Configuring environments chapter of this guide. 
+
+## Configuring application version lifecycle settings
+Each time you `upload a new version of your application `with the Elastic Beanstalk console or the EB CLI, Elastic Beanstalk `creates an application version`. If you don't delete versions that you no longer use, you will eventually reach the **application version quota** and be unable to create new versions of that application.
+
+You can avoid hitting the quota by applying an application version lifecycle policy to your applications. A lifecycle policy tells Elastic Beanstalk to delete application versions that are old, or to delete application versions when the total number of versions for an application exceeds a specified number.
+
+Elastic Beanstalk applies an application's lifecycle policy each time you create a new application version, and deletes up to 100 versions each time the lifecycle policy is applied. Elastic Beanstalk deletes old versions after creating the new version, and does not count the new version towards the maximum number of versions defined in the policy.
+
+![app-version](app-version-lifecycle.png)
+
+Elastic Beanstalk does not delete application versions that are currently being used by an environment, or application versions deployed to environments that were terminated less than ten weeks before the policy was triggered.
+
+The application version quota applies across all applications in a region. If you have several applications, configure each application with a lifecycle policy appropriate to avoid reaching the quota. For example, if you have 10 applications in a region and the quota is 1,000 application versions, consider setting a lifecycle policy with a quota of 99 application versions for all applications, or set other values in each application as long as the total is less than 1,000 application versions. Elastic Beanstalk only applies the policy if the application version creation succeeds, so if you have already reached the quota, you must delete some versions manually prior to creating a new version.
+
+By default, Elastic Beanstalk leaves the application version's [source bundle](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/applications-sourcebundle.html) in Amazon S3 to prevent loss of data. You can delete the source bundle to save space.
+
+You can set the lifecycle settings through the Elastic Beanstalk CLI and APIs. See [eb appversion](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/eb3-appversion.html), CreateApplication (using the `ResourceLifecycleConfig` parameter), and [UpdateApplicationResourceLifecycle](https://docs.aws.amazon.com/elasticbeanstalk/latest/api/API_UpdateApplicationResourceLifecycle.html) for details.
+
+## Advanced environment customization with configuration files (.ebextensions)
+
+You can add AWS Elastic Beanstalk configuration files (`.ebextensions`) to your web application's source code to configure your environment and customize the AWS resources that it contains. Configuration files are YAML- or JSON-formatted documents with a `.config` file extension that you place in a folder named `.ebextensions` and deploy in your application source bundle.
+
+>**Example**
+>
+>**.ebextensions/network-load-balancer.config**
+
+This example makes a simple configuration change. It modifies a configuration option to set the type of your environment's load balancer to Network Load Balancer.
+
+``` yaml
+option_settings:
+    aws:elasticbeanstalk:environment:
+        LoadBalancerType: network
+```
+
+We recommend using YAML for your configuration files, because it's more readable than JSON. YAML supports comments, multi-line commands, several alternatives for using quotes, and more. However, you can make any configuration change in Elastic Beanstalk configuration files identically using either YAML or JSON.
+
+>Tip
+>
+>When you are developing or testing new configuration files, launch a clean environment running the default application and deploy to that. Poorly formatted configuration files will cause a new environment launch to fail unrecoverably.
+
+## Clone an Elastic Beanstalk environment
+
+You can use an existing Elastic Beanstalk environment as the basis for a new environment by cloning the existing environment. For example, you might want to create a clone so that you can use a newer version of the platform branch used by the original environment's platform. Elastic Beanstalk configures the clone with the same environment settings used by the original environment. By cloning an existing environment instead of creating a new environment, you don't have to manually configure option settings, environment variables, and other settings. `Elastic Beanstalk also creates a copy of any AWS resource associated with the original environment. However, during the cloning process, Elastic Beanstalk doesn't copy data from Amazon RDS to the clone.` After you create the clone environment, you can modify environment configuration settings as needed.
+
+You can only clone an environment to a different platform version of the same platform branch. A different platform branch isn't guaranteed to be compatible. To use a different platform branch, you have to manually create a new environment, deploy your application code, and make any necessary changes in code and options to ensure your application works correctly on the new platform branch.
+
+> Note
+>
+>Elastic Beanstalk doesn't include any unmanaged changes to resources in the clone. Changes to AWS resources that you make using tools other than the Elastic Beanstalk console, command-line tools, or API are considered unmanaged changes.
+
+## General migration process
+
+When you're ready to go to production, Elastic Beanstalk requires a `blue/green deployment` to perform the upgrade. The following are the general best practice steps that we recommend for migration with a blue/green deployment procedure.
+
+### Preparing to test for your migration
+
+Before you deploy your application and start testing, review the information in the prior section [Differences and compatibility](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.migration-al.generic.from-al2.html#using-features.migration-al.generic.from-al2.differences). Also review the reference cited in that section, [Comparing Amazon Linux 2 and Amazon Linux 2023](https://docs.aws.amazon.com/linux/al2023/ug/compare-with-al2.html) in the *Amazon Linux 2023 User Guide.* Make a note of the specific information from this content that applies or may apply to your application and configuration set up.
+
+### High level migration steps
+
+1. Create a new environment that's based on an AL2023 platform branch.
+
+2. Deploy your application to the target AL2023 environment.
+
+    Your existing production environment will remain active and unaffected, while you iterate through testing and making adjustments to the new environment.
+
+3. Test your application thoroughly in the new environment.
+
+4. When your destination AL2023 environment is ready to go to production, swap the CNAMEs of the two environments to redirect traffic to the new AL2023 environment.
+
+
+## Using Elastic Beanstalk with Amazon RDS
+
+
+
+- Create a new database in Amazon RDS.
+
+- Start with a database that was previously [created by Elastic Beanstalk](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.managing.db.html) and subsequently [decoupled](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.managing.db.html#using-features.decoupling.db) from a Beanstalk environment. For more information, see [Adding a database to your Elastic Beanstalk environment](https://docs.aws.amazon.com/elasticbeanstalk/latest/dg/using-features.managing.db.html).
+
+
+You can use either approach to run a database instance in Amazon RDS and configure your application to connect to it on launch. You can connect multiple environments to a database and also perform seamless updates with blue-green deployments.
+
+***
+***
