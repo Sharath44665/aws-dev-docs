@@ -19,3 +19,4 @@ The following are key features of Amazon EKS:
 ### Integration with AWS services
 > Amazon EKS integrates with other AWS services, providing a comprehensive platform for `deploying and managing your containerized applications`. You can also more easily **troubleshoot your Kubernetes workloads with various observability tools**.
 
+![Alt text](image.png)
