@@ -1,6 +1,7 @@
 ### [SQS](#amazon-simple-queue-service)
 ### [SNS](#amazon-simple-notification-service)
 ### [Amazon Kinesis](#amazon-kinesis-1)
+### [Lamba](#aws-lambda)
 
 # AWS Integration & Messaging
 
@@ -675,14 +676,14 @@ A Kinesis data stream is a set of [shards](#shard). Each shard has a sequence of
 A data record is the unit of data stored in a Kinesis data stream. Data records are composed of a sequence number, a partition key, and a data blob, which is an immutable sequence of bytes. Kinesis Data Streams does not inspect, interpret, or change the data in the blob in any way. A data blob can be up to 1 MB.
 ### Capacity Mode
 
-A data stream capacity mode determines how capacity is managed and how you are charged for the usage of your data stream. Currenly, in Kinesis Data Streams, you can choose between an on-demand mode and a provisioned mode for your data streams. For more information, see Choosing the Data Stream Capacity Mode.
+A data stream capacity mode determines how capacity is managed and how you are charged for the usage of your data stream. Currenly, in Kinesis Data Streams, you can choose between an **on-demand** mode and a **provisioned** mode for your data streams. For more information, see Choosing the Data Stream Capacity Mode.
 
-With the on-demand mode, Kinesis Data Streams automatically manages the shards in order to provide the necessary throughput. You are charged only for the actual throughput that you use and Kinesis Data Streams automatically accommodates your workloads’ throughput needs as they ramp up or down. For more information, see On-demand Mode.
+With the **on-demand** mode, Kinesis Data Streams <ins>automatically manages the shards in order to provide the necessary throughput. You are charged only for the actual throughput that you use and Kinesis Data Streams automatically accommodates your workloads’ throughput needs as they ramp up or down.</ins> For more information, see On-demand Mode.
 
-With the provisioned mode, you must specify the number of shards for the data stream. The total capacity of a data stream is the sum of the capacities of its shards. You can increase or decrease the number of shards in a data stream as needed and you are charged for the number of shards at an hourly rate. For more information, see Provisioned Mode.
+With the **provisioned** mode, <ins>you must specify the number of shards for the data stream. The total capacity of a data stream is the sum of the capacities of its shards.</ins> You can increase or decrease the number of shards in a data stream as needed and you are charged for the number of shards at an hourly rate. For more information, see Provisioned Mode.
 ### Retention Period
 
-The retention period is the length of time that data records are accessible after they are added to the stream. A stream’s retention period is set to a default of 24 hours after creation. You can increase the retention period up to 8760 hours (365 days) using the IncreaseStreamRetentionPeriod operation, and decrease the retention period down to a minimum of 24 hours using the DecreaseStreamRetentionPeriod operation. Additional charges apply for streams with a retention period set to more than 24 hours. For more information, see Amazon Kinesis Data Streams Pricing
+The retention period is the length of time that data records are accessible after they are added to the stream. A stream’s retention period is set to a default of 24 hours after creation. You can increase the retention period up to 8760 hours (365 days) using the *IncreaseStreamRetentionPeriod* operation, and decrease the retention period down to a minimum of 24 hours using the *DecreaseStreamRetentionPeriod* operation. Additional charges apply for streams with a retention period set to more than 24 hours. For more information, see Amazon Kinesis Data Streams Pricing
 
 
 ### Producer
@@ -695,7 +696,7 @@ Consumers get records from Amazon Kinesis Data Streams and process them. These c
 
 An Amazon Kinesis Data Streams application is a consumer of a stream that commonly runs on a fleet of EC2 instances.
 
-There are two types of consumers that you can develop: shared fan-out consumers and enhanced fan-out consumers. To learn about the differences between them, and to see how you can create each type of consumer, see Reading Data from Amazon Kinesis Data Streams.
+There are two types of consumers that you can develop: shared fan-out consumers and enhanced fan-out consumers. To learn about the differences between them, and to see how you can create each type of consumer, see *Reading Data from Amazon Kinesis Data Streams*.
 
 The output of a Kinesis Data Streams application can be input for another stream, enabling you to create complex topologies that process data in real time. An application can also send data to a variety of other AWS services. There can be multiple applications for one stream, and each application can consume data from the stream independently and concurrently.
 ### Shard
@@ -708,19 +709,417 @@ If your data rate increases, you can increase or decrease the number of shards a
 A partition key is used to group data by shard within a stream. Kinesis Data Streams segregates the data records belonging to a stream into multiple shards. It uses the partition key that is associated with each data record to determine which shard a given data record belongs to. Partition keys are Unicode strings, with a maximum length limit of 256 characters for each key. An MD5 hash function is used to map partition keys to 128-bit integer values and to map associated data records to shards using the hash key ranges of the shards. When an application puts data into a stream, it must specify a partition key.
 ### Sequence Number
 
-Each data record has a sequence number that is unique per partition-key within its shard. Kinesis Data Streams assigns the sequence number after you write to the stream with `client.putRecords` or `client.putRecord`. Sequence numbers for the same partition key generally increase over time. The longer the time period between write requests, the larger the sequence numbers become.
+Each data record has a sequence number that is unique per partition-key within its shard. Kinesis Data Streams assigns the sequence number after you write to the stream with `client.putRecords` or `client.putRecord`. Sequence numbers for the same partition key generally increase over time. <ins>The longer the time period between write requests, the larger the sequence numbers become.</ins>
 >Note
 >
 >Sequence numbers cannot be used as indexes to sets of data within the same stream. To logically separate sets of data, use partition keys or create a separate stream for each dataset.
 
 ### Kinesis Client Library
 
-The Kinesis Client Library is compiled into your application to enable fault-tolerant consumption of data from the stream. The Kinesis Client Library ensures that for every shard there is a record processor running and processing that shard. The library also simplifies reading data from the stream. The Kinesis Client Library uses an Amazon DynamoDB table to store control data. It creates one table per application that is processing data.
+The Kinesis Client Library is compiled into your application to enable fault-tolerant consumption of data from the stream. The Kinesis Client Library ensures that for every shard there is a <ins>record processor</ins> running and processing that shard. The library also <ins>simplifies reading data </ins>from the stream. `The Kinesis Client Library uses an Amazon DynamoDB table to store control data.` It creates one table per application that is processing data.
 
 There are two major versions of the Kinesis Client Library. Which one you use depends on the type of consumer you want to create. For more information, see Reading Data from Amazon Kinesis Data Streams.
 ### Application Name
 
-The name of an Amazon Kinesis Data Streams application identifies the application. Each of your applications must have a unique name that is scoped to the AWS account and Region used by the application. This name is used as a name for the control table in Amazon DynamoDB and the namespace for Amazon CloudWatch metrics.
+The name of an Amazon Kinesis Data Streams application identifies the application. Each of your applications must have a unique name that is scoped to the AWS account and Region used by the application. `This name is used as a name for the control table in Amazon DynamoDB and the namespace for Amazon CloudWatch metrics`.
 ### Server-Side Encryption
 
 Amazon Kinesis Data Streams can automatically encrypt sensitive data as a producer enters it into a stream. Kinesis Data Streams uses AWS KMS master keys for encryption. For more information, see Data Protection in Amazon Kinesis Data Streams.
+
+## Creating and Managing Streams
+Amazon Kinesis Data Streams ingests a large amount of data in real time, durably stores the data, and makes the data available for consumption. The unit of data stored by Kinesis Data Streams is a data record. A data stream represents a group of data records. The data records in a data stream are distributed into shards.
+
+A shard has a sequence of data records in a stream. It serves as a base throughput unit of a Kinesis data stream. A shard supports 1 MB/s and 1000 records per second for writes and 2 MB/s for reads in both on-demand and provisioned capacity modes. The shard limits ensure predictable performance, making it easier to design and operate a highly reliable data streaming workflow. 
+
+## Choosing the Data Stream Capacity Mode
+### What is a Data Stream Capacity Mode?
+
+A capacity mode determines how the capacity of a data stream is managed and how you are charged for the usage of your data stream. In Amazon Kinesis Data Streams, you can choose between an on-demand mode and a provisioned mode for your data streams. 
+
+### On-demand Mode
+
+Data streams in the on-demand mode require no capacity planning and automatically scale to handle gigabytes of write and read throughput per minute. On-demand mode simplifies ingesting and storing large data volumes at a low-latency because <ins>it eliminates provisioning and managing servers, storage, or throughput. You can ingest billions of records per day without any operational overhead.</ins>
+
+On-demand mode is ideal for addressing the needs of highly variable and unpredictable application traffic. You no longer have to provision these workloads for peak capacity, which can result in higher costs due to low utilization. On-demand mode is suited for workloads with unpredictable and highly-variable traffic patterns.
+
+With the on-demand capacity mode, you pay per GB of data written and read from your data streams. You do not need to specify how much read and write throughput you expect your application to perform. Kinesis Data Streams instantly accommodates your workloads as they ramp up or down.
+
+You can create a new data stream with the on-demand mode by using the Kinesis Data Streams console, APIs, or CLI commands.
+
+A data stream in the on-demand mode accommodates up to double the peak write throughput observed in the previous 30 days. As your data stream’s write throughput reaches a new peak, Kinesis Data Streams scales the data stream’s capacity automatically. For example, if your data stream has a write throughput that varies between 10 MB/s and 40 MB/s, then Kinesis Data Streams ensures that you can easily burst to double your previous peak throughput, or 80 MB/s. If the same data stream sustains a new peak throughput of 50 MB/s, Kinesis Data Streams ensures that there is enough capacity to ingest 100 MB/s of write throughput. However, write throttling can occur if your traffic increases to more than double the previous peak within a 15-minute duration. You need to retry these throttled requests.
+
+The aggregate read capacity of a data stream with the on-demand mode increases proportionally to write throughput. This helps to ensure that consumer applications always have adequate read throughput to process incoming data in real time. You get at least twice the write throughput compared to read data using the `GetRecords` API. We recommend that you use one consumer application with the `GetRecord` API, so that it has enough room to catch up when the application needs to recover from downtime. It is recommended that you use the Enhanced Fan-Out capability of Kinesis Data Streams for scenarios that require adding more than one consumer application. Enhanced Fan-Out supports adding up to 20 consumer applications to a data stream using the `SubscribeToShard` API, with each consumer application having dedicated throughput. 
+
+### Handling Read and Write Throughput Exceptions
+
+With the on-demand capacity mode (same as with the provisioned capacity mode), you must specify a partition key with each record to write data into your data stream. Kinesis Data Streams uses your partition keys to distribute data across shards. Kinesis Data Streams monitors traffic for each shard. When the incoming traffic exceeds 500 KB/s per shard, it splits the shard within 15 minutes. The parent shard’s hash key values are redistributed evenly across child shards.
+
+If your incoming traffic exceeds twice your prior peak, you can experience read or write exceptions for about 15 minutes, even when your data is distributed evenly across the shards. We recommend that you retry all such requests so that all the records are properly stored in Kinesis Data Streams.
+
+**You may experience read and write exceptions if you are using a partition key that leads to uneven data distribution, and the records assigned to a particular shard exceed its limits**. With on-demand mode, the data stream automatically adapts to handle uneven data distribution patterns unless a single partition key exceeds a shard’s 1 MB/s throughput and 1000 records per second limits.
+
+In the on-demand mode, Kinesis Data Streams splits the shards evenly when it detects an increase in traffic. However, it does not detect and isolate hash keys that are driving a higher portion of incoming traffic to a particular shard. `If you are using highly uneven partition keys you may continue to receive write exceptions. For such use cases, we recommend that you use the provisioned capacity mode that supports granular shard splits`.
+
+### Provisioned Mode
+
+With provisioned mode, after you create the data stream, you can dynamically scale your shard capacity up or down using the AWS Management Console or the UpdateShardCount API. You can make updates while there is a Kinesis Data Streams producer or consumer application writing to or reading data from the stream.
+
+The provisioned mode is suited for predictable traffic with capacity requirements that are easy to forecast. You can use the provisioned mode if you want fine-grained control over how data is distributed across shards.
+
+With the provisioned mode, you must specify the number of shards for the data stream. To determine the size of a data stream with the provisioned mode, you need the following input values:
+
+- The average size of the data record written to the stream in kilobytes (KB), rounded up to the nearest 1 KB (`average_data_size_in_KB`).
+
+- The number of data records written to and read from the stream per second (`records_per_second`).
+
+- The number of consumers, which are Kinesis Data Streams applications that consume data concurrently and independently from the stream (`number_of_consumers`).
+
+- The incoming write bandwidth in KB (`incoming_write_bandwidth_in_KB`), which is equal to the `average_data_size_in_KB` multiplied by the `records_per_second`.
+
+- The outgoing read bandwidth in KB (`outgoing_read_bandwidth_in_KB`), which is equal to the `incoming_write_bandwidth_in_KB` multiplied by the number_of_consumers.
+
+You can calculate the number of shards (number_of_shards) that your stream needs by using the input values in the following formula.
+
+```
+number_of_shards = max(incoming_write_bandwidth_in_KiB/1024, outgoing_read_bandwidth_in_KiB/2048)
+```
+You may still experience read and write throughput exceptions in the provisioned mode if you don't configure your data stream to handle your peak throughput. In this case, you must manually scale your data stream to accommodate your data traffic.
+
+You may also experience read and write exceptions <ins>if you're using a partition key that leads to uneven data distribution and the records assigned to a shard exceed its limits. To resolve this issue in the provisioned mode, identify such shards and manually split them to better accommodate your traffic.</ins>
+
+### Switching Between Capacity Modes
+
+You can switch the capacity mode of your data stream from on-demand to provisioned, or from provisioned to on-demand. For each data stream in your AWS account, you can switch between the on-demand and provisioned capacity modes twice within 24 hours.
+
+Switching between capacity modes of a data stream does not cause any disruptions to your applications that use this data stream. You can continue writing to and reading from this data stream. As you are switching between capacity modes, either from on-demand to provisioned or from provisioned to on-demand, the status of the stream is set to Updating. You must wait for the data stream status to get to Active before you can modify its properties again.
+
+When you switch from provisioned to on-demand capacity mode, your data stream initially retains whatever shard count it had before the transition, and from this point on, Kinesis Data Streams monitors your data traffic and scales the shard count of this on-demand data stream depending on your write throughput.
+
+When you switch from on-demand to provisioned mode, your data stream also initially retains whatever shard count it had before the transition, but from this point on, you are responsible for monitoring and adjusting the shard count of this data stream to properly accomodate your write throughput.
+
+## Writing Data to Amazon Kinesis Data Streams
+A producer is an application that writes data to Amazon Kinesis Data Streams. You can build producers for Kinesis Data Streams using the AWS SDK for Java and the Kinesis Producer Library.
+
+To put data into the stream, you must specify the name of the stream, a partition key, and the data blob to be added to the stream. The partition key is used to determine which shard in the stream the data record is added to.
+
+All the data in the shard is sent to the same worker that is processing the shard. Which partition key you use depends on your application logic. The number of partition keys should typically be much greater than the number of shards. This is because the partition key is used to determine how to map a data record to a particular shard. If you have enough partition keys, the data can be evenly distributed across the shards in a stream.
+
+### Developing Producers Using the Amazon Kinesis Producer Library
+An Amazon Kinesis Data Streams producer is an application that puts user data records into a Kinesis data stream (also called data ingestion). The Kinesis Producer Library (KPL) simplifies producer application development, allowing developers to achieve high write throughput to a Kinesis data stream.
+
+You can monitor the KPL with Amazon CloudWatch. 
+
+### Role of the KPL
+
+The KPL is an easy-to-use, highly configurable library that helps you write to a Kinesis data stream. It acts as an intermediary between your producer application code and the Kinesis Data Streams API actions. The KPL performs the following primary tasks:
+
+- Writes to one or more Kinesis data streams with an automatic and configurable retry mechanism
+
+- Collects records and uses `PutRecords` to write multiple records to multiple shards per request
+
+- [Aggregates](## "a whole formed by combining several separate elements") user records to increase payload size and improve throughput
+
+- [Integrates](### "combine (one thing) with another to form a whole.") seamlessly with the Kinesis Client Library (KCL) to de-aggregate batched records on the consumer
+
+- Submits Amazon CloudWatch metrics on your behalf to provide visibility into producer performance
+
+Note that the KPL is different from the Kinesis Data Streams API that is available in the AWS SDKs
+. The Kinesis Data Streams API helps you manage many aspects of Kinesis Data Streams (including creating streams, resharding, and putting and getting records), while the KPL provides a layer of abstraction specifically for ingesting data. 
+
+###When Not to Use the KPL
+
+The KPL can incur an additional processing delay of up to `RecordMaxBufferedTime` within the library (user-configurable). Larger values of `RecordMaxBufferedTime` results in higher packing efficiencies and better performance. Applications that cannot tolerate this additional delay may need to use the AWS SDK directly.
+
+## Reading Data from Amazon Kinesis Data Streams
+A consumer is an application that processes all data from a Kinesis data stream. When a consumer uses enhanced fan-out, it gets its own 2 MB/sec allotment of read throughput, allowing multiple consumers to read data from the same stream in parallel, without contending for read throughput with other consumers. To use the enhanced fan-out capability of shards, see Developing Custom Consumers with Dedicated Throughput (Enhanced Fan-Out).
+
+By default, shards in a stream provide 2 MB/sec of read throughput per shard. This throughput gets shared across all the consumers that are reading from a given shard. In other words, the default 2 MB/sec of throughput per shard is fixed, even if there are multiple consumers that are reading from the shard. To use this default throughput of shards see, *Developing Custom Consumers with Shared Throughput.*
+
+The following table compares default throughput to enhanced fan-out. Message propagation delay is defined as the time taken in milliseconds for a payload sent using the payload-dispatching APIs (like PutRecord and PutRecords) to reach the consumer application through the payload-consuming APIs (like GetRecords and SubscribeToShard). 
+
+| Characteristics | Unregistered Consumers without Enhanced Fan-Out | Registered Consumers with Enhanced Fan-Out |
+| ---- | ----- | ----- |
+| Shard Read Throughput | Fixed at a total of 2 MB/sec per shard. If there are multiple consumers reading from the same shard, they all share this throughput. <ins>The sum of the throughputs they receive from the shard doesn't exceed 2 MB/sec.</ins> | Scales as consumers register to use enhanced fan-out. Each consumer registered to <ins>use enhanced fan-out receives its own read throughput per shard, up to 2 MB/sec, independently of other consumers.</ins> |
+| Message propagation delay | An average of around 200 ms if you have one consumer reading from the stream. This average goes up to around 1000 ms if you have five consumers.| Typically an average of 70 ms whether you have one consumer or five consumers. |
+| Cost | N/A | There is a data retrieval cost and a consumer-shard hour cost. For more information, see Amazon Kinesis Data Streams Pricing. |
+| Record delivery model | Pull model over HTTP using GetRecords.| Kinesis Data Streams pushes the records to you over HTTP/2 using SubscribeToShard. | 
+
+## Developing Consumers Using AWS Lambda
+
+You can use an AWS Lambda function to process records in a data stream. AWS Lambda is a compute service that lets you run code without provisioning or managing servers. It executes your code only when needed and scales automatically, from a few requests per day to thousands per second. You pay only for the compute time you consume. There is no charge when your code is not running. With AWS Lambda, you can run code for virtually any type of application or backend service, all with zero administration. It runs your code on a high-availability compute infrastructure and performs all of the administration of the compute resources, including server and operating system maintenance, capacity provisioning and automatic scaling, code monitoring and logging.
+
+## Developing Consumers Using Amazon Kinesis Data Firehose
+
+You can use a Kinesis Data Firehose to read and process records from a Kinesis stream. Kinesis Data Firehose is a fully managed service for delivering real-time streaming data to destinations such as Amazon S3, Amazon Redshift, Amazon OpenSearch Service, and Splunk. Kinesis Data Firehose also supports any custom HTTP endpoint or HTTP endpoints owned by supported third-party service providers, including Datadog, MongoDB, and New Relic. You can also configure Kinesis Data Firehose to transform your data records and to convert the record format before delivering your data to its destination.
+
+![kds_vs_kdf.png](kds_vs_kdf.png)
+
+
+## Using the Kinesis Client Library
+One of the methods of developing custom consumer applications that can process data from KDS data streams is to use the Kinesis Client Library (KCL).
+
+### What is the Kinesis Client Library?
+
+KCL helps you consume and process data from a Kinesis data stream by taking care of many of the complex tasks associated with distributed computing. These include load balancing across multiple consumer application instances, responding to consumer application instance failures, checkpointing processed records, and reacting to resharding. The KCL takes care of all of these subtasks so that you can focus your efforts on writing your custom record-processing logic.
+
+The KCL is different from the Kinesis Data Streams APIs that are available in the AWS SDKs. The Kinesis Data Streams APIs help you manage many aspects of Kinesis Data Streams, including creating streams, resharding, and putting and getting records. The KCL provides a layer of abstraction around all these subtasks, specifically so that you can focus on your consumer application’s custom data processing logic.
+
+The KCL acts as an intermediary between your record processing logic and Kinesis Data Streams. The KCL performs the following tasks:
+
+- Connects to the data stream
+
+- Enumerates the shards within the data stream
+
+- Uses leases to coordinates shard associations with its workers
+
+- Instantiates a record processor for every shard it manages
+
+- Pulls data records from the data stream
+
+- Pushes the records to the corresponding record processor
+
+- Checkpoints processed records
+
+- Balances shard-worker associations (leases) when the worker instance count changes or when the data stream is resharded (shards are split or merged)
+
+
+### KCL Concepts
+
+- **KCL consumer application** – an application that is custom-built using KCL and designed to read and process records from data streams.
+
+- **Consumer application instance** - KCL consumer applications are typically distributed, with one or more application instances running simultaneously in order to coordinate on failures and dynamically load balance data record processing.
+
+- **Worker** – a high level class that a KCL consumer application instance uses to start processing data. 
+
+> ! Important
+>
+>Each KCL consumer application instance has one worker. 
+
+   The worker initializes and oversees various tasks, including syncing shard and lease information, tracking shard assignments, and processing data from the shards. A worker provides KCL with the configuration information for the consumer application, such as the name of the data stream whose data records this KCL consumer application is going to process and the AWS credentials that are needed to access this data stream. The worker also kick starts that specific KCL consumer application instance to deliver data records from the data stream to the record processors.
+
+- **Lease** – data that defines the binding between a worker and a shard. Distributed KCL consumer applications use leases to partition data record processing across a fleet of workers. At any given time, each shard of data records is bound to a particular worker by a lease identified by the `leaseKey` variable.
+
+   By default, a worker can hold one or more leases (subject to the value of the maxLeasesForWorker variable) at the same time. 
+
+- **Lease table** - a unique Amazon DynamoDB table that is used to keep track of the shards in a KDS data stream that are being leased and processed by the workers of the KCL consumer application. The lease table must remain in sync (within a worker and across all workers) with the latest shard information from the data stream while the KCL consumer application is running.
+
+- **Record processor** – the logic that defines how your KCL consumer application processes the data that it gets from the data streams. At runtime, a KCL consumer application instance instantiates a worker, and this worker instantiates one record processor for every shard to which it holds a lease. 
+
+## Splitting a Shard
+To split a shard in Amazon Kinesis Data Streams, you need to specify how hash key values from the parent shard should be redistributed to the child shards. When you add a data record to a stream, it is assigned to a shard based on a hash key value. The hash key value is the MD5 hash of the partition key that you specify for the data record at the time that you add the data record to the stream. Data records that have the same partition key also have the same hash key value.
+
+When you split the shard, you specify a value in this range. That hash key value and all higher hash key values are distributed to one of the child shards. All the lower hash key values are distributed to the other child shard.
+
+The following code demonstrates a shard split operation that redistributes the hash keys evenly between each of the child shards, essentially splitting the parent shard in half. This is just one possible way of dividing the parent shard. You could, for example, split the shard so that the lower one-third of the keys from the parent go to one child shard and the upper two-thirds of the keys go to the other child shard. However, for many applications, splitting shards in half is an effective approach.
+
+The code assumes that `myStreamName` holds the name of your stream and the object variable shard holds the shard to split. Begin by instantiating a new `splitShardRequest` object and setting the stream name and shard ID.
+
+``` java
+SplitShardRequest splitShardRequest = new SplitShardRequest();
+splitShardRequest.setStreamName(myStreamName);
+splitShardRequest.setShardToSplit(shard.getShardId());
+```
+## Merging Two Shards
+
+ A shard merge operation takes two specified shards and combines them into a single shard. After the merge, the single child shard receives data for all hash key values covered by the two parent shards.
+Shard Adjacency
+
+To merge two shards, the shards must be adjacent. Two shards are considered adjacent if the union of the hash key ranges for the two shards forms a contiguous set with no gaps. `For example, suppose that you have two shards, one with a hash key range of 276...381 and the other with a hash key range of 382...454. You could merge these two shards into a single shard that would have a hash key range of 276...454`.
+
+To take another example, suppose that you have two shards, one with a hash key range of 276..381 and the other with a hash key range of 455...560. `You could not merge these two shards because there would be one or more shards between these two that cover the range 382..454`. 
+
+## After Resharding
+
+After any kind of resharding procedure in Amazon Kinesis Data Streams, and before normal record processing resumes, other procedures and considerations are required. The following sections describe these.
+
+- ### Waiting for a Stream to Become Active Again
+
+   After you call a resharding operation, either `splitShard` or `mergeShards`, you need to <ins>wait for the stream to become active again.</ins> The code to use is the same as when you wait for a stream to become active after creating a stream. That code is as follows:
+
+``` java
+DescribeStreamRequest describeStreamRequest = new DescribeStreamRequest();
+describeStreamRequest.setStreamName( myStreamName );
+
+long startTime = System.currentTimeMillis();
+long endTime = startTime + ( 10 * 60 * 1000 );
+while ( System.currentTimeMillis() < endTime ) 
+{
+  try {
+    Thread.sleep(20 * 1000);
+  } 
+  catch ( Exception e ) {}
+  
+  try {
+    DescribeStreamResult describeStreamResponse = client.describeStream( describeStreamRequest );
+    String streamStatus = describeStreamResponse.getStreamDescription().getStreamStatus();
+    if ( streamStatus.equals( "ACTIVE" ) ) {
+      break;
+    }
+   //
+    // sleep for one second
+    //
+    try {
+      Thread.sleep( 1000 );
+    }
+    catch ( Exception e ) {}
+  }
+  catch ( ResourceNotFoundException e ) {}
+}
+if ( System.currentTimeMillis() >= endTime ) 
+{
+  throw new RuntimeException( "Stream " + myStreamName + " never went active" );
+}
+```
+- ### Data Routing, Data Persistence, and Shard State after a Reshard
+
+   Kinesis Data Streams is a real-time data streaming service, which is to say that your applications should assume that data is flowing continuously through the shards in your stream. When you reshard, data records that were flowing to the parent shards are re-routed to flow to the child shards based on the hash key values that the data-record partition keys map to. However, any data records that were in the parent shards before the reshard remain in those shards. In other words, the parent shards do not disappear when the reshard occurs. They persist along with the data they contained before the reshard. The data records in the parent shards are accessible using the getShardIterator and getRecords operations in the Kinesis Data Streams API, or through the Kinesis Client Library.
+
+   >Note
+   >
+   >Data records are accessible from the time they are added to the stream to the current retention period. This holds true regardless of any changes to the shards in the stream during that time period. For more information about a stream’s retention period, see Changing the Data Retention Period.
+
+
+   In the process of resharding, a parent shard transitions from an `OPEN` state to a `CLOSED` state to an `EXPIRED` state.
+
+   - **OPEN**: Before a reshard operation, a parent shard is in the `OPEN` state, which means that data records can be both added to the shard and retrieved from the shard.
+
+   - **CLOSED**: After a reshard operation, the parent shard transitions to a `CLOSED` state. This means that data records are no longer added to the shard. Data records that would have been added to this shard are now added to a child shard instead. However, data records can still be retrieved from the shard for a limited time.
+
+   - **EXPIRED**: After the stream's retention period has expired, all the data records in the parent shard have expired and are no longer accessible. At this point, the shard itself transitions to an `EXPIRED` state. Calls to `getStreamDescription().getShards` to enumerate the shards in the stream do not include `EXPIRED` shards in the list shards returned. 
+
+## What Is Amazon Kinesis Data Analytics for SQL Applications?
+With Amazon Kinesis Data Analytics for SQL Applications, you can process and analyze streaming data using standard SQL. The service enables you to quickly author and run powerful SQL code against streaming sources to perform time series analytics, feed real-time dashboards, and create real-time metrics.
+
+To get started with Kinesis Data Analytics, you create a Kinesis Data Analytics application that continuously reads and processes streaming data. The service supports ingesting data from Amazon Kinesis Data Streams and Amazon Kinesis Data Firehose streaming sources. Then, you author your SQL code using the interactive editor and test it with live streaming data. You can also configure destinations where you want Kinesis Data Analytics to send the results.
+
+Kinesis Data Analytics supports Amazon Kinesis Data Firehose (Amazon S3, Amazon Redshift, Amazon OpenSearch Service, and Splunk), AWS Lambda, and Amazon Kinesis Data Streams as destinations.
+
+### When Should I Use Amazon Kinesis Data Analytics?
+
+Amazon Kinesis Data Analytics enables you to quickly author SQL code that continuously reads, processes, and stores data in near real time. Using standard SQL queries on the streaming data, you can construct applications that transform and provide insights into your data. Following are some of example scenarios for using Kinesis Data Analytics:
+
+- **Generate time-series analytics** – You can calculate metrics over time windows, and then stream values to Amazon S3 or Amazon Redshift through a Kinesis data delivery stream.
+
+- **Feed real-time dashboards** – You can send aggregated and processed streaming data results downstream to feed real-time dashboards.
+
+- **Create real-time metrics** – You can create custom metrics and triggers for use in real-time monitoring, notifications, and alarms.
+
+![kinesis-app-analytics.png](kinesis-app-analytics.png)
+
+### Get started with Flink SQL APIs in Amazon Kinesis Data Analytics Studio
+To show the working solution of interactive analytics on streaming data, we use a Kinesis Data Generator UI application to generate the stream of data, which continuously writes to Kinesis Data Streams. For the interactive analytics on Kinesis Data Streams, we use Kinesis Data Analytics Studio that uses Apache Flink as the processing engine, and notebooks powered by Apache Zeppelin. These notebooks come with preconfigured Apache Flink, which allows you to query data from Kinesis Data Streams interactively using SQL APIs. To use SQL queries in the Apache Zeppelin notebook, we configure an AWS Glue Data Catalog table, which is configured to use Kinesis Data Streams as a source. This configuration allows you to query the data stream by referring to the AWS Glue table in SQL queries.
+
+![kda-with-apache-flink](BDB1684-image001.jpg)
+
+[click to setup](https://aws.amazon.com/blogs/big-data/get-started-with-flink-sql-apis-in-amazon-kinesis-data-analytics-studio/)
+
+## AWS Lambda
+Run code without thinking about servers or clusters
+
+### Why AWS Lambda?
+AWS Lambda is a compute service that runs your code in response to events and automatically manages the compute resources, making it the fastest way to turn an idea into a modern, production, serverless applications. 
+
+### Benefits of AWS Lambda
+
+**No need for managing servers:** Run code without provisioning or managing infrastructure. Simply write and upload code as a .zip file or container image. 
+
+**Automatic Scaling:** Automatically respond to code execution requests at any scale, from a dozen events per day to hundreds of thousands per second.
+
+**Pay as you go Pricing:** Save costs by paying only for the compute time you use—by the millisecond—instead of provisioning infrastructure upfront for peak capacity. 
+
+**Performance Optimization:** Optimize code execution time and performance with the right function memory size. Respond to high demand in double-digit milliseconds with Provisioned Concurrency. 
+      
+###  How it works
+AWS Lambda is a serverless, event-driven compute service that lets you run code for virtually any type of application or backend service without provisioning or managing servers. You can trigger Lambda from over 200 AWS services and software as a service (SaaS) applications, and only pay for what you use. 
+
+### File Processing
+![fileProcessing](product-page-diagram_Lambda-RealTimeFileProcessing.a59577de4b6471674a540b878b0b684e0249a18c.png)
+
+### Stream processing :
+![streamProcessing](product-page-diagram_Lambda-RealTimeStreamProcessing.d79d55b5f3a5d6b58142a6c0fc8a29eadc81c02b.png)
+
+### Web Applications:
+![webApplication](product-page-diagram_Lambda-WebApplications446656646.png)
+
+### IoT Backends:
+![iotBackend](product-page-diagram_Lambda-IoTBackends.3440c7f50a9b73e6a084a242d44009dc0fbe5fab.png)
+
+### Mobile Backends:
+![mobileBackend](product-page-diagram_Lambda-MobileBackends_option2.00f6421e67e8d6bdbc59f3a2db6fa7d7f8508073.png)
+
+### AWS for Every Application
+AWS Lambda, a serverless compute service, executes your code in response to events, handling compute resources for you. Discover how AWS's comprehensive set of infrastructure capabilities and services enables rapid and cost-effective modern applications development. 
+
+### Use Cases
+
+#### Quickly process data at Scale
+Meet resource-intensive and unpredictable demand by using AWS Lambda to instantly scale out to more than 18k vCPUs. Build processing workflows quickly and easily with suite of other serverless offerings and event triggers. 
+
+#### Run interactive web and mobile backends
+Combine AWS Lambda with other AWS services to create secure, stable, and scalable online experiences. 
+
+#### Enable powerful ML insights
+Preprocess data before feeding it to your machine learning (ML) model. With Amazon Elastic File System (EFS) access, AWS Lambda handles infrastructure management and provisioning to simplify scaling. 
+
+#### Create event-driven applications:
+
+Build event-driven functions for easy communication between decoupled services. Reduce costs by running applications during times of peak demand without crashing or over-provisioning resources. 
+
+---
+When using Lambda, you are responsible only for your code. Lambda manages the compute fleet that offers a balance of memory, CPU, network, and other resources to run your code. Because Lambda manages these resources, you cannot log in to compute instances or customize the operating system on provided runtimes.
+
+Lambda performs operational and administrative activities on your behalf, including managing capacity, monitoring, and logging your Lambda functions.
+
+If you do need to manage your compute resources, AWS has other compute services to consider, such as:
+
+- AWS App Runner builds and deploys containerized web applications automatically, load balances traffic with encryption, scales to meet your traffic needs, and allows for the configuration of how services are accessed and communicate with other AWS applications in a private Amazon VPC.
+
+- AWS Fargate with Amazon ECS runs containers without having to provision, configure, or scale clusters of virtual machines.
+
+- Amazon EC2 lets you customize operating system, network and security settings, and the entire software stack. You are responsible for provisioning capacity, monitoring fleet health and performance, and using Availability Zones for fault tolerance
+
+### Key features
+
+The following key features help you develop Lambda applications that are scalable, secure, and easily extensible:
+
+Configuring function options:
+
+    Configure your Lambda function using the console or AWS CLI.
+Environment variables:
+
+    Use environment variables to adjust your function's behavior without updating code.
+Versions:
+
+    Manage the deployment of your functions with versions, so that, for example, a new function can be used for beta testing without affecting users of the stable production version.
+Container images:
+
+    Create a container image for a Lambda function by using an AWS provided base image or an alternative base image so that you can reuse your existing container tooling or deploy larger workloads that rely on sizable dependencies, such as machine learning.
+Layers:
+
+    Package libraries and other dependencies to reduce the size of deployment archives and makes it faster to deploy your code.
+Lambda extensions:
+
+    Augment your Lambda functions with tools for monitoring, observability, security, and governance.
+Function URLs
+
+    Add a dedicated HTTP(S) endpoint to your Lambda function.
+Response streaming:
+
+    Configure your Lambda function URLs to stream response payloads back to clients from Node.js functions, to improve time to first byte (TTFB) performance or to return larger payloads.
+Concurrency and scaling controls:
+
+    Apply fine-grained control over the scaling and responsiveness of your production applications.
+Code signing:
+
+    Verify that only approved developers publish unaltered, trusted code in your Lambda functions
+Private networking:
+
+    Create a private network for resources such as databases, cache instances, or internal services.
+File system access:
+
+    Configure a function to mount an Amazon Elastic File System (Amazon EFS) to a local directory, so that your function code can access and modify shared resources safely and at high concurrency.
+Lambda SnapStart for Java:
+
+    Improve startup performance for Java runtimes by up to 10x at no extra cost, typically with no changes to your function code.
+
+
