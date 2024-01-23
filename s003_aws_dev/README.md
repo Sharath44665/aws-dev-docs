@@ -1082,44 +1082,273 @@ If you do need to manage your compute resources, AWS has other compute services 
 
 The following key features help you develop Lambda applications that are scalable, secure, and easily extensible:
 
-Configuring function options:
+**Configuring function options:**
 
-    Configure your Lambda function using the console or AWS CLI.
-Environment variables:
+Configure your Lambda function using the console or AWS CLI.
 
-    Use environment variables to adjust your function's behavior without updating code.
-Versions:
+**Environment variables:**
 
-    Manage the deployment of your functions with versions, so that, for example, a new function can be used for beta testing without affecting users of the stable production version.
-Container images:
+Use environment variables to adjust your function's behavior without updating code.
 
-    Create a container image for a Lambda function by using an AWS provided base image or an alternative base image so that you can reuse your existing container tooling or deploy larger workloads that rely on sizable dependencies, such as machine learning.
-Layers:
+**Versions:**
 
-    Package libraries and other dependencies to reduce the size of deployment archives and makes it faster to deploy your code.
-Lambda extensions:
+   Manage the deployment of your functions with versions, so that, for example, a new function can be used for beta testing without affecting users of the stable production version.
 
-    Augment your Lambda functions with tools for monitoring, observability, security, and governance.
-Function URLs
+**Container images:**
 
-    Add a dedicated HTTP(S) endpoint to your Lambda function.
-Response streaming:
+   Create a container image for a Lambda function by using an AWS provided base image or an alternative base image so that you can reuse your existing container tooling or deploy larger workloads that rely on sizable dependencies, such as machine learning.
 
-    Configure your Lambda function URLs to stream response payloads back to clients from Node.js functions, to improve time to first byte (TTFB) performance or to return larger payloads.
-Concurrency and scaling controls:
+**Layers:**
 
-    Apply fine-grained control over the scaling and responsiveness of your production applications.
-Code signing:
+   Package libraries and other dependencies to reduce the size of deployment archives and makes it faster to deploy your code.
 
-    Verify that only approved developers publish unaltered, trusted code in your Lambda functions
-Private networking:
+**Lambda extensions:**
 
-    Create a private network for resources such as databases, cache instances, or internal services.
-File system access:
+   Augment your Lambda functions with tools for monitoring, observability, security, and governance.
 
-    Configure a function to mount an Amazon Elastic File System (Amazon EFS) to a local directory, so that your function code can access and modify shared resources safely and at high concurrency.
-Lambda SnapStart for Java:
+**Function URLs**
 
-    Improve startup performance for Java runtimes by up to 10x at no extra cost, typically with no changes to your function code.
+   Add a dedicated HTTP(S) endpoint to your Lambda function.
 
+**Response streaming:**
+
+   Configure your Lambda function URLs to stream response payloads back to clients from Node.js functions, to improve time to first byte (TTFB) performance or to return larger payloads.
+
+**Concurrency and scaling controls:**
+
+   Apply fine-grained control over the scaling and responsiveness of your production applications.
+
+**Code signing:**
+
+   Verify that only approved developers publish unaltered, trusted code in your Lambda functions
+
+**Private networking:**
+
+   Create a private network for resources such as databases, cache instances, or internal services.
+
+**File system access:**
+
+   Configure a function to mount an Amazon Elastic File System (Amazon EFS) to a local directory, so that your function code can access and modify shared resources safely and at high concurrency.
+
+**Lambda SnapStart for Java:**
+
+   Improve startup performance for Java runtimes by up to 10x at no extra cost, typically with no changes to your function code.
+
+
+## Lambda Foundation:
+### Trigger
+
+A trigger is a `resource or configuration that invokes a Lambda function.` Triggers include AWS services that you can configure to invoke a function and [event source mappings](https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventsourcemapping.html). An event source mapping is a resource in Lambda that reads items from a stream or queue and invokes a function. For more information, see [Invoking Lambda functions](https://docs.aws.amazon.com/lambda/latest/dg/lambda-invocation.html) and [Using AWS Lambda with other services.](https://docs.aws.amazon.com/lambda/latest/dg/lambda-services.html)
+![triggerImg](./img/lambda.png)
+
+### Deployment package
+
+You deploy your Lambda function code using a deployment package. Lambda supports two types of deployment packages:
+
+   - A .zip file archive that contains your function code and its dependencies. Lambda provides the operating system and runtime for your function.
+
+   - A container image that is compatible with the Open Container Initiative (OCI)specification. You add your function code and dependencies to the image. You must also include the operating system and a Lambda runtime.
+
+For more information, see [Lambda deployment packages](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-package.html).
+
+### Layer
+
+A Lambda layer is a .zip file archive that can contain additional code or other content. `A layer can contain libraries, a custom runtime, data, or configuration files`.
+
+Layers provide a convenient way to package libraries and other dependencies that you can use with your Lambda functions. Using layers reduces the size of uploaded deployment archives and makes it faster to deploy your code. Layers also promote code sharing and separation of responsibilities so that you can iterate faster on writing business logic.
+
+You can include up to `five layers per function`. Layers count towards the standard Lambda deployment size quotas. When you include a layer in a function, the contents are extracted to the `/opt` directory in the execution environment.
+
+By default, the layers that you create are private to your AWS account. You can choose to share a layer with other accounts or to make the layer public. If your functions consume a layer that a different account published, your functions can continue to use the layer version after it has been deleted, or after your permission to access the layer is revoked. However, you cannot create a new function or update functions using a deleted layer version.
+
+Functions deployed as a container image do not use layers. Instead, you package your preferred runtime, libraries, and other dependencies into the container image when you build the image.
+
+### Extension
+
+Lambda extensions enable you to augment (meaning: enhance, increase, or expand something) your functions. For example, you can use extensions to integrate your functions with your preferred monitoring, observability, security, and governance tools. 
+
+![lambdaExtension](./img/lambdExtension_telemetry-api-concept-diagram.png)
+
+![lambdaExtensionLifeCycle](./img/lambdExtensionOverview-Full-Sequence.png)
+
+### Concurrency
+
+Concurrency is the number of requests that your function is serving at any given time. When your function is invoked, Lambda provisions an instance of it to process the event. When the function code finishes running, it can handle another request. If the function is invoked again while a request is still being processed, another instance is provisioned, increasing the function's concurrency.
+
+### Qualifier
+
+When you invoke or view a function, you can include a qualifier to specify a version or alias. A version is an immutable snapshot of a function's code and configuration that has a numerical qualifier. For example, `my-function:1`. An alias is a pointer to a version that you can update to map to a different version, or split traffic between two versions. For example, `my-function:BLUE`. You can use versions and aliases together to provide a stable interface for clients to invoke your function.
+
+### Destination
+
+A destination is an AWS resource where Lambda can send events from an asynchronous invocation. `You can configure a destination for events that fail processing. Some services also support a destination for events that are successfully processed`.
+
+## Lambda deployment packages
+Your AWS Lambda function's code consists of scripts or compiled programs and their dependencies. You use a deployment package to deploy your function code to Lambda. Lambda supports two types of deployment packages: container images and .zip file archives. 
+- [Container images](https://docs.aws.amazon.com/lambda/latest/dg/gettingstarted-package.html#gettingstarted-package-images)
+- .zip file archives
+- Layers
+- Using other AWS services to build a deployment package
+
+## private Networking
+
+via VPC
+
+### Lambda Hyperplane ENIs
+
+
+The Hyperplane ENI is a managed network resource that the Lambda service creates and manages. Multiple execution environments in the `Lambda VPC can use a Hyperplane ENI to securely access resources inside of VPCs in your account`. Hyperplane ENIs provide NAT capabilities from the Lambda VPC to your account VPC.
+
+For each subnet, Lambda creates a network interface for each unique set of security groups. Functions in the account that share the same subnet and security group combination will use the same network interfaces. Connections made through the Hyperplane layer are automatically tracked, even if the security group configuration does not otherwise require tracking. Inbound packets from the VPC that don't correspond to established connections are dropped at the Hyperplane layer. For more information, see [Security group connection tracking](https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/security-group-connection-tracking.html) in the Amazon EC2 User Guide for Linux Instances.
+
+Because the functions in your account share the ENI resources, the ENI lifecycle is more complex than other Lambda resources. The following sections describe the ENI lifecycle.
+
+**ENI lifecycle**
+
+- Creating ENIs
+- Managing ENIs
+- Deleting ENIs
+
+### Security
+
+AWS provides security groups and network ACLs to increase security in your VPC. Security groups control inbound and outbound traffic for your resources, and network ACLs control inbound and outbound traffic for your subnets. Security groups provide enough access control for most subnets.
+
+## Asynchronous invocation
+Several AWS services, such as Amazon Simple Storage Service (Amazon S3) and Amazon Simple Notification Service (Amazon SNS), invoke functions asynchronously to process events. When you invoke a function asynchronously, you don't wait for a response from the function code. You hand off the event to Lambda and Lambda handles the rest. You can configure how Lambda handles errors, and can send invocation records to a downstream resource such as Amazon Simple Queue Service (Amazon SQS) or Amazon EventBridge (EventBridge) to chain together components of your application.
+
+- How Lambda handles asynchronous invocations
+- Configuring error handling for asynchronous invocation
+- Configuring destinations for asynchronous invocation
+- Asynchronous invocation configuration API
+- Dead-letter queues
+
+### How Lambda handles asynchronous invocations
+
+The following diagram shows clients invoking a Lambda function asynchronously. Lambda queues the events before sending them to the function.
+
+![features-async.png](./img/features-async.png)
+
+For asynchronous invocation, Lambda places the event in a queue and returns a success response without additional information. A separate process reads events from the queue and sends them to your function. To invoke a function asynchronously, set the invocation type parameter to `Event`.
+
+``` bash
+aws lambda invoke \
+  --function-name my-function  \
+      --invocation-type Event \
+          --cli-binary-format raw-in-base64-out \
+              --payload '{ "key": "value" }' response.json
+  
+  ```
+  The cli-binary-format option is required if you're using AWS CLI version 2. To make this the default setting, run aws `configure set cli-binary-format raw-in-base64-out`.
+  
+``` json
+{
+   "StatusCode": 202
+}
+```
+The output file (`response.json`) doesn't contain any information, but is still created when you run this command. If Lambda isn't able to add the event to the queue, the error message appears in the command output.
+
+Lambda manages the function's asynchronous event queue and attempts to retry on errors. If the function returns an error, Lambda attempts to run it two more times, with a one-minute wait between the first two attempts, and two minutes between the second and third attempts. Function errors include errors returned by the function's code and errors returned by the function's runtime, such as timeouts.
+
+If the function doesn't have enough concurrency available to process all events, additional requests are throttled. `For throttling errors (429) and system errors (500-series)`, Lambda returns the event to the queue and attempts to run the function again for up to 6 hours. The `retry interval increases exponentially from 1 second after the first attempt to a maximum of 5 minutes`. If the queue contains many entries, Lambda increases the retry interval and reduces the rate at which it reads events from the queue.
+
+Even if your function doesn't return an error, it's possible for it to receive the same event from Lambda multiple times because the queue itself is eventually consistent. If the function can't keep up with incoming events, events might also be deleted from the queue without being sent to the function. Ensure that your function code gracefully handles duplicate events, and that you have enough concurrency available to handle all invocations.
+
+You can also configure Lambda to send an invocation record to another service. Lambda supports the following destinations for asynchronous invocation. Note that SQS FIFO queues and SNS FIFO topics are not supported.
+
+- Amazon SQS – A standard SQS queue.
+
+- Amazon SNS – A standard SNS topic.
+
+- AWS Lambda – A Lambda function.
+
+- Amazon EventBridge – An EventBridge event bus.
+
+The invocation record contains details about the request and response in JSON format. You can configure separate destinations for events that are processed successfully, and events that fail all processing attempts. Alternatively, you can configure a standard Amazon SQS queue or standard Amazon SNS topic as a dead-letter queue for discarded events. For `dead-letter queues`, Lambda only sends the content of the event, without details about the response.
+
+If Lambda can't send a record to a destination you have configured, it sends a DestinationDeliveryFailures metric to Amazon CloudWatch
+
+>Note
+>
+>To prevent a function from triggering, you can set the function's reserved concurrency to zero. When you set reserved concurrency to zero for an asynchronously invoked function, Lambda begins sending new events to the configured dead-letter queue or the on-failure event destination, without any retries. To process events that were sent while reserved concurrency was set to zero, you must consume the events from the dead-letter queue or the on-failure event destination.
+
+### Configuring error handling for asynchronous invocation
+![asynchronousLambda](./img/asynchronousLambda.png)
+
+### Configuring destinations for asynchronous invocation
+
+To retain records of asynchronous invocations, add a destination to your function. You can choose to send either successful or failed invocations to a destination. Each function can have multiple destinations, so you can configure separate destinations for successful and failed events. Each record sent to the destination is a JSON document with details about the invocation. Like error handling settings, you can configure destinations on a function, function version, or alias.
+![destinationLambda](./img/destinationLambda.png)
+
+The following example shows an invocation record for an event that failed three processing attempts due to a function error.
+
+``` json
+{
+    "version": "1.0",
+    "timestamp": "2019-11-14T18:16:05.568Z",
+    "requestContext": {
+        "requestId": "e4b46cbf-b738-xmpl-8880-a18cdf61200e",
+        "functionArn": "arn:aws:lambda:us-east-2:123456789012:function:my-function:$LATEST",
+        "condition": "RetriesExhausted",
+        "approximateInvokeCount": 3
+    },
+    "requestPayload": {
+        "ORDER_IDS": [
+            "9e07af03-ce31-4ff3-xmpl-36dce652cb4f",
+            "637de236-e7b2-464e-xmpl-baf57f86bb53",
+            "a81ddca6-2c35-45c7-xmpl-c3a03a31ed15"
+        ]
+    },
+    "responseContext": {
+        "statusCode": 200,
+        "executedVersion": "$LATEST",
+        "functionError": "Unhandled"
+    },
+    "responsePayload": {
+        "errorMessage": "RequestId: e4b46cbf-b738-xmpl-8880-a18cdf61200e Process exited before completing request"
+    }
+}
+```
+### Tracing requests to destinations
+
+You can use AWS X-Ray to see a connected view of each request as it's queued, processed by a Lambda function, and passed to the destination service. When you activate X-Ray tracing for a function or a service that invokes a function, Lambda adds an X-Ray header to the request and passes the header to the destination service. Traces from upstream services are automatically linked to traces from downstream Lambda functions and destination services, creating an end-to-end view of the entire application. For more information about tracing, see *Using AWS Lambda with AWS X-Ray*.
+
+### Asynchronous invocation configuration API
+
+To manage asynchronous invocation settings with the AWS CLI or AWS SDK, use the following API operations.
+
+- PutFunctionEventInvokeConfig
+
+- GetFunctionEventInvokeConfig
+
+- UpdateFunctionEventInvokeConfig
+
+- ListFunctionEventInvokeConfigs
+
+- DeleteFunctionEventInvokeConfig
+
+### Dead-letter queues
+
+As an alternative to an on-failure destination, you can configure your function with a dead-letter queue to save discarded events for further processing. A dead-letter queue acts the same as an on-failure destination in that it is used when an event fails all processing attempts or expires without being processed. However, a dead-letter queue is part of a function's version-specific configuration, so it is locked in when you publish a version. On-failure destinations also support additional targets and include details about the function's response in the invocation record.
+
+To reprocess events in a dead-letter queue, you can set it as an event source for your Lambda function. Alternatively, you can manually retrieve the events.
+
+You can choose an Amazon SQS standard queue or Amazon SNS standard topic for your dead-letter queue. 
+- Amazon SQS queue – A queue holds failed events until they're retrieved. Choose an Amazon SQS standard queue if you expect a single entity, such as a Lambda function or CloudWatch alarm, to process the failed event. For more information, see [Using Lambda with Amazon SQS](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html).
+
+- Amazon SNS topic – A topic relays failed events to one or more destinations. Choose an Amazon SNS standard topic if you expect multiple entities to act on a failed event. For example, you can configure a topic to send events to an email address, a Lambda function, and/or an HTTP endpoint. For more information, see [Using AWS Lambda with Amazon SNS.](https://docs.aws.amazon.com/lambda/latest/dg/with-sns.html)
+
+see the pic for editing dead letter queue
+![asynchronous](./img/asynchronousLambda.png)
+
+
+**Dead-letter queue message attributes**
+
+- **RequestID (String)** – The ID of the invocation request. Request IDs appear in function logs. You can also use the X-Ray SDK to record the request ID on an attribute in the trace. You can then search for traces by request ID in the X-Ray console. For an example, see the [error processor sample](https://docs.aws.amazon.com/lambda/latest/dg/samples-errorprocessor.html).
+
+- **ErrorCode** (Number) – The HTTP status code.
+
+- **ErrorMessage** (String) – The first 1 KB of the error message.
+![invocation-dlq-attributes.png](./img/invocation-dlq-attributes.png)
+
+If Lambda can't send a message to the dead-letter queue, it deletes the event and emits the `DeadLetterErrors` metric. This can happen because of lack of permissions, or if the total size of the message exceeds the limit for the target queue or topic. For example, say that an Amazon SNS notification with a body close to 256 KB in size triggers a function that results in an error. In that case, the event data that Amazon SNS adds, combined with the attributes that Lambda adds, can cause the message to exceed the maximum size allowed in the dead-letter queue.
 
