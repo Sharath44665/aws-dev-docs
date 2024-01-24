@@ -604,19 +604,19 @@ Amazon Kinesis cost-effectively processes and analyzes streaming data at any sca
 
 Amazon Kinesis Data Streams is a serverless streaming data service that simplifies the capture, processing, and storage of data streams at any scale
 
-![Product-Page-Diagram_Amazon-Kinesis-Data-Streams](Product-Page-Diagram_Amazon-Kinesis-Data-Streams.png)
+![Product-Page-Diagram_Amazon-Kinesis-Data-Streams](./img/Product-Page-Diagram_Amazon-Kinesis-Data-Streams.png)
 
 **Kinesis Data Firehose**
 
 Amazon Kinesis Data Firehose is an extract, transform, and load (ETL) service that reliably captures, transforms, and delivers streaming data to data lakes, data stores, and analytics services. 
 
-![Product-Page-Diagram_Amazon-Kinesis-Data-Firehose.png](Product-Page-Diagram_Amazon-Kinesis-Data-Firehose.png)
+![Product-Page-Diagram_Amazon-Kinesis-Data-Firehose.png](./img/Product-Page-Diagram_Amazon-Kinesis-Data-Firehose.png)
 
 **Kinesis Video Streams**
 
 With Amazon Kinesis Video Streams, you can more easily and securely stream video from connected devices to AWS for analytics, ML, playback, and other processing.
 
-![Product-Page-Diagram_Amazon-Kinesis-Video-Stream_sasfaafafsfd2.png](Product-Page-Diagram_Amazon-Kinesis-Video-Stream_sasfaafafsfd2.png)
+![Product-Page-Diagram_Amazon-Kinesis-Video-Stream_sasfaafafsfd2.png](./img/Product-Page-Diagram_Amazon-Kinesis-Video-Stream_sasfaafafsfd2.png)
 
 ### Use cases
 
@@ -664,7 +664,7 @@ Complex stream processing
 
 The following diagram illustrates the high-level architecture of Kinesis Data Streams. The producers continually push data to Kinesis Data Streams, and the consumers process the data in real time. Consumers (such as a custom application running on Amazon EC2 or an Amazon Kinesis Data Firehose delivery stream) can store their results using an AWS service such as Amazon DynamoDB, Amazon Redshift, or Amazon S3. 
 
-![architectureKDS.png](architectureKDS.png)
+![architectureKDS.png](./img/architectureKDS.png)
 
 ### Kinesis Data Streams Terminology
 ### Kinesis Data Stream
@@ -852,7 +852,7 @@ You can use an AWS Lambda function to process records in a data stream. AWS Lamb
 
 You can use a Kinesis Data Firehose to read and process records from a Kinesis stream. Kinesis Data Firehose is a fully managed service for delivering real-time streaming data to destinations such as Amazon S3, Amazon Redshift, Amazon OpenSearch Service, and Splunk. Kinesis Data Firehose also supports any custom HTTP endpoint or HTTP endpoints owned by supported third-party service providers, including Datadog, MongoDB, and New Relic. You can also configure Kinesis Data Firehose to transform your data records and to convert the record format before delivering your data to its destination.
 
-![kds_vs_kdf.png](kds_vs_kdf.png)
+![kds_vs_kdf.png](./img/kds_vs_kdf.png)
 
 
 ## Using the Kinesis Client Library
@@ -1004,12 +1004,12 @@ Amazon Kinesis Data Analytics enables you to quickly author SQL code that contin
 
 - **Create real-time metrics** – You can create custom metrics and triggers for use in real-time monitoring, notifications, and alarms.
 
-![kinesis-app-analytics.png](kinesis-app-analytics.png)
+![kinesis-app-analytics.png](./img/kinesis-app-analytics.png)
 
 ### Get started with Flink SQL APIs in Amazon Kinesis Data Analytics Studio
 To show the working solution of interactive analytics on streaming data, we use a Kinesis Data Generator UI application to generate the stream of data, which continuously writes to Kinesis Data Streams. For the interactive analytics on Kinesis Data Streams, we use Kinesis Data Analytics Studio that uses Apache Flink as the processing engine, and notebooks powered by Apache Zeppelin. These notebooks come with preconfigured Apache Flink, which allows you to query data from Kinesis Data Streams interactively using SQL APIs. To use SQL queries in the Apache Zeppelin notebook, we configure an AWS Glue Data Catalog table, which is configured to use Kinesis Data Streams as a source. This configuration allows you to query the data stream by referring to the AWS Glue table in SQL queries.
 
-![kda-with-apache-flink](BDB1684-image001.jpg)
+![kda-with-apache-flink](./img/BDB1684-image001.jpg)
 
 [click to setup](https://aws.amazon.com/blogs/big-data/get-started-with-flink-sql-apis-in-amazon-kinesis-data-analytics-studio/)
 
@@ -1033,19 +1033,19 @@ AWS Lambda is a compute service that runs your code in response to events and au
 AWS Lambda is a serverless, event-driven compute service that lets you run code for virtually any type of application or backend service without provisioning or managing servers. You can trigger Lambda from over 200 AWS services and software as a service (SaaS) applications, and only pay for what you use. 
 
 ### File Processing
-![fileProcessing](product-page-diagram_Lambda-RealTimeFileProcessing.a59577de4b6471674a540b878b0b684e0249a18c.png)
+![fileProcessing](./img/product-page-diagram_Lambda-RealTimeFileProcessing.a59577de4b6471674a540b878b0b684e0249a18c.png)
 
 ### Stream processing :
-![streamProcessing](product-page-diagram_Lambda-RealTimeStreamProcessing.d79d55b5f3a5d6b58142a6c0fc8a29eadc81c02b.png)
+![streamProcessing](./img/product-page-diagram_Lambda-RealTimeStreamProcessing.d79d55b5f3a5d6b58142a6c0fc8a29eadc81c02b.png)
 
 ### Web Applications:
 ![webApplication](product-page-diagram_Lambda-WebApplications446656646.png)
 
 ### IoT Backends:
-![iotBackend](product-page-diagram_Lambda-IoTBackends.3440c7f50a9b73e6a084a242d44009dc0fbe5fab.png)
+![iotBackend](./img/product-page-diagram_Lambda-IoTBackends.3440c7f50a9b73e6a084a242d44009dc0fbe5fab.png)
 
 ### Mobile Backends:
-![mobileBackend](product-page-diagram_Lambda-MobileBackends_option2.00f6421e67e8d6bdbc59f3a2db6fa7d7f8508073.png)
+![mobileBackend](./img/product-page-diagram_Lambda-MobileBackends_option2.00f6421e67e8d6bdbc59f3a2db6fa7d7f8508073.png)
 
 ### AWS for Every Application
 AWS Lambda, a serverless compute service, executes your code in response to events, handling compute resources for you. Discover how AWS's comprehensive set of infrastructure capabilities and services enables rapid and cost-effective modern applications development. 
