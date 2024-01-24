@@ -1352,3 +1352,62 @@ see the pic for editing dead letter queue
 
 If Lambda can't send a message to the dead-letter queue, it deletes the event and emits the `DeadLetterErrors` metric. This can happen because of lack of permissions, or if the total size of the message exceeds the limit for the target queue or topic. For example, say that an Amazon SNS notification with a body close to 256 KB in size triggers a function that results in an error. In that case, the event data that Amazon SNS adds, combined with the attributes that Lambda adds, can cause the message to exceed the maximum size allowed in the dead-letter queue.
 
+## Using Lambda with Amazon EventBridge Scheduler
+Amazon EventBridge Scheduler is a serverless scheduler that allows you to create, run, and manage tasks from one central, managed service. With EventBridge Scheduler, you can create schedules using cron and rate expressions for recurring patterns, or configure one-time invocations. You can set up flexible time windows for delivery, define retry limits, and set the maximum retention time for unprocessed events.
+
+|  Occurrence | Do this... |
+| ----------- | ---------- |
+| **One-time schedule**<br>A one-time schedule invokes a target only once at the date and time that you specify. | For **Date and time**, do the following:<ul><li>Enter a valid date in `YYYY/MM/DD` format.</li><li>Enter a timestamp in 24-hour `hh:mm` format.</li><li>For Timezone, choose the timezone.</li></ul> |
+| **Recurring schedule**<br>A recurring schedule invokes a target at a rate that you specify using a cron expression or rate expression. | <ol type="a"><li>For **Schedule type**, do one of the following:<ul><li>To use a cron expression to define the schedule, choose Cron-based schedule and enter the cron expression.</li><li>To use a rate expression to define the schedule, choose Rate-based schedule and enter the rate expression.</li></ul></li><li>For **Flexible time window**, choose **Off** to turn off the option, or choose one of the pre-defined time windows. For example, if you choose **15 minutes** and you set a recurring schedule to invoke its target once every hour, the schedule runs within 15 minutes after the start of every hour. </li></ol> |
+
+### S3 event notification:
+destinations:
+![s3EventNotification](./img/s3EventDestination.png)
+
+## Lambda event source mappings
+An event source mapping is a Lambda resource that reads from an event source and invokes a Lambda function. You can use event source mappings to process items from a stream or queue in services that don't invoke Lambda functions directly. 
+
+
+**Services that Lambda reads events from**
+
+- [Amazon DynamoDB](https://docs.aws.amazon.com/lambda/latest/dg/with-ddb.html)
+
+- [Amazon Kinesis](https://docs.aws.amazon.com/lambda/latest/dg/with-kinesis.html)
+
+- [Amazon MQ](https://docs.aws.amazon.com/lambda/latest/dg/with-mq.html)
+
+- [Amazon Managed Streaming for Apache Kafka (Amazon MSK)](https://docs.aws.amazon.com/lambda/latest/dg/with-msk.html)
+
+- [Self-managed Apache Kafka](https://docs.aws.amazon.com/lambda/latest/dg/with-kafka.html)
+
+- [Amazon Simple Queue Service (Amazon SQS)](https://docs.aws.amazon.com/lambda/latest/dg/with-sqs.html)
+
+- [Amazon DocumentDB (with MongoDB compatibility) (Amazon DocumentDB)](https://docs.aws.amazon.com/lambda/latest/dg/with-documentdb.html)
+
+An event source mapping uses permissions in the function's execution role to read and manage items in the event source. Permissions, event structure, settings, and polling behavior vary by event source. For more information, see the linked topic for the service that you use as an event source
+### Batching behavior
+
+
+
+Event source mappings read items from a target event source. By default, an event source mapping batches records together into a single payload that Lambda sends to your function. To fine-tune batching behavior, you can configure a batching window (`MaximumBatchingWindowInSeconds`) and a batch size (`BatchSize`). A batching window is the maximum amount of time to gather records into a single payload. A batch size is the maximum number of records in a single batch. Lambda invokes your function when one of the following three criteria is met:
+- The **batching window reaches its maximum value**. Batching window behavior varies depending on the specific event source
+   - **For Kinesis, DynamoDB, and Amazon SQS event sources:** The default batching window is 0 seconds. This means that Lambda sends batches to your function as quickly as possible. If you configure a MaximumBatchingWindowInSeconds, the next batching window begins as soon as the previous function invocation completes.
+   - **For Amazon MSK, self-managed Apache Kafka, Amazon MQ, and Amazon DocumentDB event sources**: The default batching window is 500 ms. You can configure MaximumBatchingWindowInSeconds to any value from 0 seconds to 300 seconds in increments of seconds. A batching window begins as soon as the first record arrives.
+   >Note
+   >
+   >Because you can only change MaximumBatchingWindowInSeconds in increments of seconds, you cannot revert back to the 500 ms default batching window after you have changed it. To restore the default batching window, you must create a new event source mapping.
+
+
+
+- **The batch size is met**. The minimum batch size is 1. The default and maximum batch size depend on the event source. For details about these values, see the [`BatchSize`](https://docs.aws.amazon.com/lambda/latest/dg/API_CreateEventSourceMapping.html#SSS-CreateEventSourceMapping-request-BatchSize) specification for the `CreateEventSourceMapping` API operation.
+
+- The **payload size** reaches **6 MB**. You cannot modify this limit.
+
+The following diagram illustrates these three conditions. Suppose a batching window begins at t = 7 seconds. In the first scenario, the batching window reaches its 40 second maximum at t = 47 seconds after accumulating 5 records. In the `second scenario, the batch size reaches 10 before the batching window expires`, <ins>so the batching window ends early.</ins> In the third scenario, the `maximum payload size is reached before` the batching window expires, so the <ins>batching window ends early.</ins>
+
+
+![batchingWindow](./img/batching-window.png)
+
+The following example shows an event source mapping that reads from a Kinesis stream. If a batch of events fails all processing attempts, the event source mapping sends details about the batch to an SQS queue.
+
+![features-eventsourcemapping.png](./img/features-eventsourcemapping.png)
