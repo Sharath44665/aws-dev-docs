@@ -22,7 +22,7 @@ Fully managed message queuing for microservices, distributed systems, and server
 
 Amazon Simple Queue Service (Amazon SQS) lets you send, store, and receive messages between software components at any volume, without losing messages or requiring other services to be available.
 
-![sqsImg](product-page-diagram_Amazon-SQS@2x.8639596f10bfa6d7cdb2e83df728e789963dcc39.png)
+![sqsImg](./img/product-page-diagram_Amazon-SQS@2x.8639596f10bfa6d7cdb2e83df728e789963dcc39.png)
 
 ### Use Cases
 **Increase application reliability and scale:**
@@ -41,7 +41,7 @@ Amazon Simple Queue Service (Amazon SQS) lets you send, store, and receive messa
 ## Message lifecycle
 
 The following scenario describes the lifecycle of an Amazon SQS message in a queue, from creation to deletion.
-![sqs-message-lifecycle-diagram.png](sqs-message-lifecycle-diagram.png)
+![sqs-message-lifecycle-diagram.png](./img/sqs-message-lifecycle-diagram.png)
 1. A producer (component 1) sends message A to a queue, and the message is distributed across the Amazon SQS servers redundantly.
 2. When a consumer (component 2) is ready to process messages, it consumes messages from the queue, and message A is returned. While message A is being processed, it remains in the queue and isn't returned to subsequent receive requests for the duration of the [visibility timeout](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html).
 3. The consumer (component 2) deletes message A from the queue to prevent the message from being received and processed again when the visibility timeout expires.
@@ -52,7 +52,7 @@ The following scenario describes the lifecycle of an Amazon SQS message in a que
 
 ## Differences between Amazon SQS, Amazon MQ, and Amazon SNS
 **Amazon SQS** offers hosted queues that integrate and decouple distributed software systems and components. Amazon SQS provides a generic web services API that you can access using any programming language supported by AWS SDK. Messages in the queue are typically processed by a single subscriber. `Amazon SQS and Amazon SNS `are often used together to create a `fanout messaging application`
-![queue-details-page.png](queue-details-page.png)
+![queue-details-page.png](./img/queue-details-page.png)
 
 
 **Amazon SNS** is a publish-subscribe service that provides message delivery from publishers (also known as producers) to multiple subscriber endpoints(also known as consumers). Publishers communicate asynchronously with subscribers by sending messages to a topic, which is a logical access point and communication channel. Subscribers can subscribe to an Amazon SNS topic and receive published messages using a supported endpoint type, such as Amazon Kinesis Data Firehose, Amazon SQS, Lambda, HTTP, email, mobile push notifications, and mobile text messages (SMS). Amazon SNS acts as a message router and delivers messages to subscribers in real time. `If a subscriber is not available at the time of message publication, the message is not stored for later retrieval`.
@@ -106,7 +106,7 @@ There are three main parts to this configuration:
 - A target tracking policy that configures your Auto Scaling group to scale based on the custom metric and a set target value. CloudWatch alarms invoke the scaling policy.
 
 The following diagram illustrates the architecture of this configuration. 
-![sqs-as-custom-metric-diagram](sqs-as-custom-metric-diagram.png)
+![sqs-as-custom-metric-diagram](./img/sqs-as-custom-metric-diagram.png)
 
 ### Decouple messaging pattern
 This pattern provides asynchronous communication between microservices by using an asynchronous poll model. When the backend system receives a call, it immediately responds with a request identifier and then asynchronously processes the request. <ins>A loosely coupled architecture can be built, which avoids bottlenecks caused by synchronous communication, latency, and input/output operations (IO). In the pattern's use case, Amazon Simple Queue Service (Amazon SQS) and Lambda are used to implement asynchronous communication between different microservices.</ins>
@@ -129,7 +129,7 @@ A disadvantage of this pattern is that business transaction actions are synchron
 
 In this use case, the insurance system has a sales database that is automatically updated with the customer transaction details after a monthly payment is made. The following illustration shows how to build this system by using the decouple messaging pattern.
 
-![integrating-diagram3](integrating-diagram3.png)
+![integrating-diagram3](./img/integrating-diagram3.png)
 The workflow consists of the following steps:
 
 1. The frontend application calls the API Gateway with the payment information after a user makes their monthly payment.
@@ -220,7 +220,7 @@ Cross-account permissions don't apply to the following actions:
 ### Amazon SQS visibility timeout
 ***
 When a consumer receives and processes a message from a queue, the message remains in the queue. `Amazon SQS doesn't automatically delete the message`. Because Amazon SQS is a distributed system, there's no guarantee that the consumer actually receives the message (for example, due to a connectivity issue, or due to an issue in the consumer application). Thus, the consumer must delete the message from the queue after receiving and processing it.
-![sqs-visibility-timeout-diagram](sqs-visibility-timeout-diagram.png)
+![sqs-visibility-timeout-diagram](./img/sqs-visibility-timeout-diagram.png)
 
 Immediately after a message is received, it remains in the queue. `To prevent other consumers from processing the message again, Amazon SQS sets a visibility timeout`, a period of time during which Amazon SQS prevents all consumers from receiving and processing the message. The default visibility timeout for a message is 30 seconds. The minimum is 0 seconds. The maximum is 12 hours. 
 
@@ -290,7 +290,7 @@ When you consume messages from a queue using short polling, Amazon SQS samples a
 
 The following diagram shows the short-polling behavior of messages returned from a standard queue after one of your system components makes a receive request. Amazon SQS samples several of its servers (in gray) and returns messages A, C, D, and B from these servers. Message E isn't returned for this request, but is returned for a subsequent (meaning = coming after something in time; following) request.
 
-![ArchOverview_Receive.png](ArchOverview_Receive.png)
+![ArchOverview_Receive.png](./img/ArchOverview_Receive.png)
 
 ### Differences between long and short polling
 
@@ -353,7 +353,7 @@ The main task of a dead-letter queue is to handle the lifecycle of unconsumed me
 You can use dead-letter queue redrive to manage the lifecycle of unconsumed messages. After you have investigated the attributes and related metadata available for unconsumed messages in a standard or FIFO dead-letter queue, you can redrive the messages back to their source queues. Dead-letter queue redrive reduces API call billing by batching the messages while moving them.
 
 The redrive task uses Amazon SQS's *SendMessageBatch*, *ReceiveMessage*, and *DeleteMessageBatch* APIs on behalf of the user to redrive the messages. Therefore, all redriven messages are considered new messages with a new `messageid`, `enqueueTime`, and retention period. The pricing of dead-letter queue redrive uses the number of API calls invoked and bills based on the Amazon SQS pricing
-![sqs-dead-letter-queue-redrive-diagram](sqs-dead-letter-queue-redrive-diagram.png)
+![sqs-dead-letter-queue-redrive-diagram](./img/sqs-dead-letter-queue-redrive-diagram.png)
 By default, dead-letter queue redrive moves messages from a dead-letter queue to a source queue. However, you can also configure any other queue as the redrive destination if both queues are the same type. For example, if the dead-letter queue is a FIFO queue, the redrive destination queue must be a FIFO queue as well. Additionally, you can configure the redrive velocity to set the rate at which Amazon SQS moves messages. 
 
 ## Amazon SQS temporary queues
@@ -382,7 +382,7 @@ The most common use case for temporary queues is the request-response messaging 
 
 The following diagram shows a common configuration using this pattern.
 
-![sqs-request-response-pattern](sqs-request-response-pattern.png)
+![sqs-request-response-pattern](./img/sqs-request-response-pattern.png)
 
 ## Amazon SQS delay queues
 Delay queues let you postpone the delivery of new messages to consumers for a number of seconds, for example, when your consumer application needs additional time to process messages. If you create a delay queue, <ins>any messages that you send to the queue remain invisible to consumers for the duration of the delay period</ins>. The default (minimum) delay for a queue is 0 seconds. The maximum is 15 minutes.
@@ -396,7 +396,7 @@ Delay queues let you postpone the delivery of new messages to consumers for a nu
 
 Delay queues are similar to [visibility timeouts](#amazon-sqs-visibility-timeout) because both features make messages unavailable to consumers for a specific period of time. The difference between the two is that, for delay queues, a message is hidden when it is first added to queue, whereas for visibility timeouts a message is hidden only after it is consumed from the queue. The following diagram illustrates the relationship between delay queues and visibility timeouts. 
 
-![sqs-delay-queues-diagram.png](sqs-delay-queues-diagram.png)
+![sqs-delay-queues-diagram.png](./img/sqs-delay-queues-diagram.png)
 
 To set delay seconds on individual messages, rather than on an entire queue, use message timers to allow Amazon SQS to use the message timer's DelaySeconds value instead of the delay queue's DelaySeconds value.
 
@@ -449,15 +449,15 @@ or Push Notification service
 Amazon Simple Notification Service (Amazon SNS) sends notifications two ways, A2A and A2P. A2A provides high-throughput, push-based, many-to-many messaging between distributed systems, microservices, and event-driven serverless applications. These applications include Amazon Simple Queue Service (SQS), Amazon Kinesis Data Firehose, AWS Lambda, and other HTTPS endpoints. A2P functionality lets you send messages to your customers with SMS texts, push notifications, and email. 
 
 pub/ sub
-![Product-Page-Diagram_Amazon-SNS_Event-Driven-SNS-Compute@2x.03cb54865e1c586c26ee73f9dff0dc079125e9dc](Product-Page-Diagram_Amazon-SNS_Event-Driven-SNS-Compute@2x.03cb54865e1c586c26ee73f9dff0dc079125e9dc.png)
+![Product-Page-Diagram_Amazon-SNS_Event-Driven-SNS-Compute@2x.03cb54865e1c586c26ee73f9dff0dc079125e9dc](./img/Product-Page-Diagram_Amazon-SNS_Event-Driven-SNS-Compute@2x.03cb54865e1c586c26ee73f9dff0dc079125e9dc.png)
 
 SMS
 
-![Product-Page-Diagram_Amazon-SNS-SMS@2x.f499caaae8a9877fbefb4d9cf4768d030dc282da](Product-Page-Diagram_Amazon-SNS-SMS@2x.f499caaae8a9877fbefb4d9cf4768d030dc282da.png)
+![Product-Page-Diagram_Amazon-SNS-SMS@2x.f499caaae8a9877fbefb4d9cf4768d030dc282da](./img/Product-Page-Diagram_Amazon-SNS-SMS@2x.f499caaae8a9877fbefb4d9cf4768d030dc282da.png)
 
 Mobile Push:
 
-![Product-Page-Diagram_Amazon-SNS-Mobile-Push@2x.08ac920f6c0bcf10c713be9e423b13e6fd9bd50c](Product-Page-Diagram_Amazon-SNS-Mobile-Push@2x.08ac920f6c0bcf10c713be9e423b13e6fd9bd50c.png)
+![Product-Page-Diagram_Amazon-SNS-Mobile-Push@2x.08ac920f6c0bcf10c713be9e423b13e6fd9bd50c](./img/Product-Page-Diagram_Amazon-SNS-Mobile-Push@2x.08ac920f6c0bcf10c713be9e423b13e6fd9bd50c.png)
 
 ### Use cases
 **Integrate your applications with FIFO messaging**
@@ -474,7 +474,7 @@ Mobile Push:
 
 Amazon Simple Notification Service (Amazon SNS) is a managed service that provides message delivery from publishers to subscribers (also known as producers and consumers). Publishers communicate asynchronously with subscribers by sending messages to a topic, which is a logical access point and communication channel. Clients can subscribe to the SNS topic and receive published messages using a supported endpoint type, such as Amazon Kinesis Data Firehose, Amazon SQS, AWS Lambda, HTTP, email, mobile push notifications, and mobile text messages (SMS).
 
-![sns-delivery-protocols.png](sns-delivery-protocols.png)
+![sns-delivery-protocols.png](./img/sns-delivery-protocols.png)
 
 ## Features and capabilities
 Amazon SNS provides the following features and capabilities:
@@ -528,7 +528,7 @@ The Fanout scenario is when a message published to an SNS topic is replicated an
 
 For example, you can develop an application that publishes a message to an SNS topic whenever an order is placed for a product. Then, SQS queues that are subscribed to the SNS topic receive identical notifications for the new order. An Amazon Elastic Compute Cloud (Amazon EC2) server instance attached to one of the SQS queues can handle the processing or fulfillment of the order. And you can attach another Amazon EC2 server instance to a data warehouse for analysis of all orders received.
 
-![sns-fanout](sns-fanout.png)
+![sns-fanout](./img/sns-fanout.png)
 
 You can also use fanout to replicate data sent to your production environment with your test environment. Expanding upon the previous example, you can subscribe another SQS queue to the same SNS topic for new incoming orders. Then, by attaching this new SQS queue to your test environment, you can continue to improve and test your application using data received from your production environment.
 
@@ -575,7 +575,7 @@ The following example describes an ecommerce platform built by an auto parts man
 
 - An analytics application that aggregates price updates and stores them into an Amazon S3 bucket, enabling Amazon Athena to query the bucket for business intelligence (BI) purposes. To get price change notifications, the analytics application subscribes its Amazon SQS standard queue to the price management application's Amazon SNS FIFO topic. Unlike the other applications, the analytics one doesn't require the price updates to be strictly ordered.
 
-![sns-fifo-usecase](sns-fifo-usecase.png)
+![sns-fifo-usecase](./img/sns-fifo-usecase.png)
 
 For the wholesale and retail applications to receive price updates in the correct order, the price management application must use a strictly ordered message distribution system. Using Amazon SNS FIFO topics and Amazon SQS FIFO queues enables the processing of messages in order and with no duplication.
 
@@ -1411,3 +1411,13 @@ The following diagram illustrates these three conditions. Suppose a batching win
 The following example shows an event source mapping that reads from a Kinesis stream. If a batch of events fails all processing attempts, the event source mapping sends details about the batch to an SQS queue.
 
 ![features-eventsourcemapping.png](./img/features-eventsourcemapping.png)
+
+The event batch is the event that Lambda sends to the function. It is a batch of records or messages compiled from the items that the event source mapping reads up until the current batching window expires.
+
+For Kinesis and DynamoDB streams, an event source mapping creates an iterator for each shard in the stream and processes items in each shard in order. You can configure the event source mapping to read only new items that appear in the stream, or to start with older items. Processed items aren't removed from the stream, and other functions or consumers can process them.
+
+Lambda doesn't wait for any configured Lambda extensions to complete before sending the next batch for processing. In other words, your extensions may continue to run as Lambda processes the next batch of records. This can cause throttling issues if you breach any of your account's concurrency settings or limits. To detect whether this is a potential issue, monitor your functions and check whether you're seeing higher concurrency metrics than expected for your event source mapping. Due to short times in between invokes, Lambda may briefly report higher concurrency usage than the number of shards. This can be true even for Lambda functions without extensions.
+
+By default, if your function returns an error, the event source mapping reprocesses the entire batch until the function succeeds, or the items in the batch expire. To ensure in-order processing, the event source mapping pauses processing for the affected shard until the error is resolved. You can configure the event source mapping to discard old events or process multiple batches in parallel. If you process multiple batches in parallel, in-order processing is still guaranteed for each partition key, but the event source mapping simultaneously processes multiple partition keys in the same shard.
+
+For stream sources (DynamoDB and Kinesis), you can configure the maximum number of times that Lambda retries when your function returns an error. Service errors or throttles where the batch does not reach your function do not count toward retry attempts.
