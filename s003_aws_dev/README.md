@@ -1016,6 +1016,21 @@ To show the working solution of interactive analytics on streaming data, we use 
 ## AWS Lambda
 Run code without thinking about servers or clusters
 
+- [**Benifits**](#benefits-of-aws-lambda)
+- [**use case**](#use-cases-3)
+- [**Features**](#key-features)
+- [**foundation**](#lambda-foundation)
+- [**deployment of packages**](#lambda-deployment-packages)
+- [**asynchronous Invocation**](#asynchronous-invocation)
+   - [**error handling**](#configuring-error-handling-for-asynchronous-invocation)
+- [**using lambda with aws eventbridge sheduler**](#using-lambda-with-amazon-eventbridge-scheduler)
+- [**event source mapping**](#lambda-event-source-mappings)
+- [**error handling patterns**](#implementing-aws-lambda-error-handling-patterns)
+- [**Execution role**](#lambda-execution-role)
+- [**Logging and monitoring**](#monitoring-and-troubleshooting-lambda-functions)
+- [lambda@edge](#customizing-at-the-edge-with-lambdaedge)
+
+
 ### Why AWS Lambda?
 AWS Lambda is a compute service that runs your code in response to events and automatically manages the compute resources, making it the fastest way to turn an idea into a modern, production, serverless applications. 
 
@@ -1039,7 +1054,7 @@ AWS Lambda is a serverless, event-driven compute service that lets you run code 
 ![streamProcessing](./img/product-page-diagram_Lambda-RealTimeStreamProcessing.d79d55b5f3a5d6b58142a6c0fc8a29eadc81c02b.png)
 
 ### Web Applications:
-![webApplication](product-page-diagram_Lambda-WebApplications446656646.png)
+![webApplication](./img/product-page-diagram_Lambda-WebApplications446656646.png)
 
 ### IoT Backends:
 ![iotBackend](./img/product-page-diagram_Lambda-IoTBackends.3440c7f50a9b73e6a084a242d44009dc0fbe5fab.png)
@@ -1274,6 +1289,21 @@ If Lambda can't send a record to a destination you have configured, it sends a D
 ### Configuring error handling for asynchronous invocation
 ![asynchronousLambda](./img/asynchronousLambda.png)
 
+**Using both a DLQ and Lambda destinations**
+
+For example, many of your applications may contain customer records. To comply with the California Consumer Privacy Act (CCPA), different organizations may need to delete records for a particular customer. You can set up a consumer delete SNS topic. Each organization creates a Lambda function, which processes the events published by the SNS topic and deletes customer records in its managed applications.
+
+The following shows the design pattern when you configure an SNS topic as the event source for a Lambda function, which uses destination queues for success and failure process.
+
+![DLQAndLambdaDestination](./img/SNS-topic-as-event-source-for-Lambda.png)
+You configure a DLQ on the SNS topic to capture messages that SNS cannot deliver to Lambda. When Lambda invokes the function, it sends details of the successfully processed messages to an on-success SQS destination. You can use this pattern to route an event to multiple services for simpler use cases. For orchestrating multiple services, AWS Step Functions is a better design choice.
+
+Lambda can also send details of unsuccessfully processed messages to an on-failure SQS destination.
+
+A variant of this pattern is to replace an SQS destination with an EventBridge destination so that multiple consumers can process an event based on the destination.
+
+To explore how to use an SQS DLQ and Lambda destinations, deploy the code in this repository. Once deployed, you can use this instruction to test the pattern with the happy and unhappy paths.
+
 ### Configuring destinations for asynchronous invocation
 
 To retain records of asynchronous invocations, add a destination to your function. You can choose to send either successful or failed invocations to a destination. Each function can have multiple destinations, so you can configure separate destinations for successful and failed events. Each record sent to the destination is a JSON document with details about the invocation. Like error handling settings, you can configure destinations on a function, function version, or alias.
@@ -1421,3 +1451,144 @@ Lambda doesn't wait for any configured Lambda extensions to complete before send
 By default, if your function returns an error, the event source mapping reprocesses the entire batch until the function succeeds, or the items in the batch expire. To ensure in-order processing, the event source mapping pauses processing for the affected shard until the error is resolved. You can configure the event source mapping to discard old events or process multiple batches in parallel. If you process multiple batches in parallel, in-order processing is still guaranteed for each partition key, but the event source mapping simultaneously processes multiple partition keys in the same shard.
 
 For stream sources (DynamoDB and Kinesis), you can configure the maximum number of times that Lambda retries when your function returns an error. Service errors or throttles where the batch does not reach your function do not count toward retry attempts.
+
+## implementing-aws-lambda-error-handling-patterns
+
+You can apply this pattern in many scenarios. For example, your operational application can add sales orders to an operational data store. You may then want to load the sales orders to your data warehouse periodically so that the information is available for forecasting and analysis. The operational application can batch completed sales as events and place them on an SQS queue. A Lambda function can then process the events and load the completed sale records into your data warehouse.
+
+If your function processes the batch successfully, the pollers delete the messages from the SQS queue. If the batch is not successfully processed, the pollers do not delete the messages from the queue. Once the visibility timeout expires, the messages are available again to be reprocessed. If the message retention period expires, SQS deletes the message from the queue.
+
+The following table shows the invocation types and retry behavior of the AWS services mentioned.
+
+| AWS service example | Invocation type | Retry behavior |
+| ------------------- | --------------- | -------------- |
+| Amazon API Gateway | Synchronous | No built-in retry, client attempts retries.|
+| Amazon SNS <br> <br> Amazon EventBridge| Asynchronous | Built-in retries with exponential backoff. |
+| Amazon SQS | Poll-based | Retries after visibility timeout expires until message retention period expires |
+
+> ### Conclusion
+> you can use to design resilient event-driven serverless applications. Error handling during event processing is an important part of designing serverless cloud applications.
+>
+>You can deploy the code from the repository to explore how to use poll-based and asynchronous invocations. See how poll-based invocations can send failed messages to a DLQ. See how to use DLQs and Lambda destinations to route and handle unsuccessful events.
+
+## Lambda execution role
+
+A Lambda function's execution role is an AWS Identity and Access Management (IAM) role that grants the function permission to access AWS services and resources. For example, you might create an execution role that has permission to send logs to Amazon CloudWatch and upload trace data to AWS X-Ray. This page provides information on how to create, view, and manage a Lambda function's execution role.
+
+You provide an execution role when you create a function. **When you invoke your function, Lambda automatically provides your function with temporary credentials by assuming this role.** You don't have to call sts:AssumeRole in your function code.
+
+In order for Lambda to properly assume your execution role, **the role's [trust policy](https://docs.aws.amazon.com/lambda/latest/dg/lambda-intro-execution-role.html#permissions-executionrole-api) must specify the Lambda service principal (lambda.amazonaws.com) as a trusted service**.
+
+![executionRole](./img/executionRoleHelloWorldFn.png)
+
+### Grant least privilege access to your Lambda execution role
+
+When you first create an IAM role for your Lambda function during the development phase, you might sometimes grant permissions beyond what is required. Before publishing your function in the production environment, as a best practice, adjust the policy to include only the required permissions. For more information, see Apply least-privilege permissions in the IAM User Guide.
+
+Use **IAM Access Analyzer** to help identify the required permissions for the IAM execution role policy. IAM Access Analyzer reviews your AWS CloudTrail logs over the date range that you specify and generates a policy template with only the permissions that the function used during that time. You can use the template to create a managed policy with fine-grained permissions, and then attach it to the IAM role. That way, you grant only the permissions that the role needs to interact with AWS resources for your specific use case.
+
+### Working with Lambda execution environment credentials
+It's common for your Lambda function code to make API requests to other AWS services. To make these requests, Lambda generates an ephemeral set of credentials by assuming your function's execution role. These credentials are available as environment variables during your function's invocation. When working with AWS SDKs, you don't need to provide credentials for the SDK directly in code. By default, <ins>the credential provider chain sequentially checks each place where you can set credentials and selects the first one available—usually the environment variables</ins> (`AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`, and `AWS_SESSION_TOKEN`).
+
+## Monitoring and troubleshooting Lambda functions
+AWS Lambda integrates with other AWS services to help you monitor and troubleshoot your Lambda functions. Lambda automatically monitors Lambda functions on your behalf and reports metrics through Amazon CloudWatch. To help you monitor your code when it runs, Lambda automatically tracks the number of requests, the invocation duration per request, and the number of requests that result in an error. 
+
+### Monitoring functions on the Lambda console
+- Viewing graphs on the Lambda console:
+![consoleMonitoring](./img/console-monitoring-definition.png)
+- Viewing queries on the CloudWatch Logs console:
+![consoleMonitoringInsights](./img/console-monitoring-insights.png)
+
+### Working with Lambda function metrics
+On the CloudWatch console, you can build graphs and dashboards with these metrics. You can set alarms to respond to changes in utilization, performance, or error rates. Lambda sends metric data to **CloudWatch in 1-minute intervals**. For more immediate insight into your Lambda function, you can create high-resolution custom metrics as described in Serverless Land. Charges apply for custom metrics and CloudWatch alarms. 
+
+![lambdaMetricsCloudWatch](./img/lambdaMetricsCloudWatch.png)
+
+[see types of metrics](https://docs.aws.amazon.com/lambda/latest/dg/monitoring-metrics.html#monitoring-metrics-types)
+
+### Using Amazon CloudWatch logs with AWS Lambda
+
+AWS Lambda automatically monitors Lambda functions on your behalf to help you troubleshoot failures in your functions. As long as your function's execution role has the necessary permissions, Lambda captures logs for all requests handled by your function and sends them to Amazon CloudWatch Logs.
+
+You can insert logging statements into your code to help you validate that your code is working as expected. Lambda automatically integrates with CloudWatch Logs and sends all logs from your code to a CloudWatch logs group associated with a Lambda function.
+
+By default, Lambda sends logs to a log group named /aws/lambda/<function name>. If you want your function to send logs to another group, you can configure this using the Lambda console, the AWS Command Line Interface (AWS CLI) or the Lambda API
+
+``` bash
+aws lambda create-function --function-name myFunction --runtime nodejs18.x \
+--handler index.handler --zip-file fileb://function.zip \
+--role arn:aws:iam::123456789012:role/LambdaRole --logging-config LogFormat=JSON
+```
+
+### Using AWS Lambda with AWS X-Ray
+
+You can use AWS X-Ray to visualize the components of your application, identify performance bottlenecks, and troubleshoot requests that resulted in an error. Your Lambda functions send trace data to X-Ray, and X-Ray processes the data to generate a service map and searchable trace summaries.
+![lambdaWithXray](./img/lambdaWithXray.png)
+
+### Using Lambda Insights in Amazon CloudWatch
+see the above pic 
+
+CloudWatch Lambda Insights is a monitoring and troubleshooting solution for serverless applications running on AWS Lambda. The solution collects, aggregates, and summarizes system-level metrics including CPU time, memory, disk and network usage. <ins>It also collects, aggregates, and summarizes diagnostic information such as cold starts and Lambda worker shutdowns to help you isolate issues with your Lambda functions and resolve them quickly.</ins>
+
+Lambda Insights uses a new CloudWatch Lambda Insights extension, which is provided as a Lambda layer. When you enable this extension on a Lambda function for a supported runtime, it collects system-level metrics and emits a single performance log event for every invocation of that Lambda function. CloudWatch uses embedded metric formatting to extract metrics from the log events.
+
+### Using CodeGuru Profiler with your Lambda function
+see the aws docs
+
+## Customizing at the edge with Lambda@Edge
+Lambda@Edge is an extension of AWS Lambda. Lambda@Edge is a compute service that lets you execute functions that customize the content that CloudFront delivers. 
+
+Lambda@Edge scales automatically, from a few requests per day to thousands per second. Processing requests at AWS locations closer to the viewer instead of on origin servers significantly reduces latency and improves the user experience.
+
+execute python functions in AWS locations globally that are closer to the viewer, without provisioning or managing servers.
+
+
+- When CloudFront receives a request from a viewer (viewer request)
+
+- Before CloudFront forwards a request to the origin (origin request)
+
+- When CloudFront receives a response from the origin (origin response)
+
+- Before CloudFront returns the response to the viewer (viewer response)
+
+There are many uses for Lambda@Edge processing. For example:
+
+- A Lambda function can inspect cookies and rewrite URLs so that users see different versions of a site for A/B testing.
+
+- CloudFront can return different objects to viewers based on the device they're using by checking the User-Agent header, which includes information about the devices. For example, CloudFront can return different images based on the screen size of their device. Similarly, the function could consider the value of the Referer header and cause CloudFront to return the images to bots that have the lowest available resolution.
+
+- Or you could check cookies for other criteria. For example, on a retail website that sells clothing, if you use cookies to indicate which color a user chose for a jacket, a Lambda function can change the request so that CloudFront returns the image of a jacket in the selected color.
+
+- A Lambda function can generate HTTP responses when CloudFront viewer request or origin request events occur.
+
+- A function can inspect headers or authorization tokens, and insert a header to control access to your content before CloudFront forwards the request to your origin.
+
+- A Lambda function can also make network calls to external resources to confirm user credentials, or fetch additional content to customize a response.
+
+### Customizing at the edge with CloudFront Functions
+With CloudFront Functions in Amazon CloudFront, you can write lightweight functions in JavaScript for high-scale, latency-sensitive CDN customizations. Your functions can manipulate the requests and responses that flow through CloudFront, perform basic authentication and authorization, generate HTTP responses at the edge, and more. The CloudFront Functions runtime environment offers submillisecond startup times, scales immediately to handle millions of requests per second, and is highly secure. CloudFront Functions is a native feature of CloudFront, which means you can build, test, and deploy your code entirely within CloudFront.
+
+CloudFront Functions is ideal for lightweight, short-running functions for use cases like the following:
+
+- **Cache key normalization** – You can transform HTTP request attributes (headers, query strings, cookies, even the URL path) to create an optimal cache key, which can improve your cache hit ratio.
+
+- **Header manipulation** – You can insert, modify, or delete HTTP headers in the request or response. For example, you can add a True-Client-IP header to every request.
+
+- **Status code modification and body generation** – You can evaluate headers and respond back to viewers with customized content.
+
+- **URL redirects or rewrites** – You can redirect viewers to other pages based on information in the request, or rewrite all requests from one path to another.
+
+- **Request authorization** – You can validate hashed authorization tokens, such as JSON web tokens (JWT), by inspecting authorization headers or other request metadata.
+
+When you associate a CloudFront function with a CloudFront distribution, CloudFront intercepts requests and responses at CloudFront edge locations and passes them to your function. You can invoke CloudFront functions when the following events occur:
+
+- When CloudFront receives a request from a viewer (viewer request)
+
+- Before CloudFront returns the response to the viewer (viewer response)
+
+
+## Internet access to a Lambda function 
+![internetToLambda](./img/internetAccessToLambda.png)
+[click here for detail](https://repost.aws/knowledge-center/internet-access-lambda-function)
+
+[lambda home](#aws-lambda)
