@@ -1028,7 +1028,10 @@ Run code without thinking about servers or clusters
 - [**error handling patterns**](#implementing-aws-lambda-error-handling-patterns)
 - [**Execution role**](#lambda-execution-role)
 - [**Logging and monitoring**](#monitoring-and-troubleshooting-lambda-functions)
-- [lambda@edge](#customizing-at-the-edge-with-lambdaedge)
+- [**lambda@edge**](#customizing-at-the-edge-with-lambdaedge)
+- [**lambda scaling**](#lambda-function-scaling)
+   - [Reserved concurrency](#reserved-concurrency)
+   - [Provisioned concurrency](#provisioned-concurrency)
 
 
 ### Why AWS Lambda?
@@ -1204,6 +1207,30 @@ Your AWS Lambda function's code consists of scripts or compiled programs and the
 - .zip file archives
 - Layers
 - Using other AWS services to build a deployment package
+
+### Container images
+
+A container image includes the base operating system, the runtime, Lambda extensions, your application code and its dependencies. You can also add static data, such as machine learning models, into the image.
+
+Lambda provides a set of open-source base images that you can use to build your container image. To create and test container images, you can use the AWS Serverless Application Model (AWS SAM) command line interface (CLI) or native container tools such as the Docker CLI.
+
+To deploy the image to your function, you specify the Amazon ECR image URL using the Lambda console, the Lambda API, command line tools, or the AWS SDKs.
+
+For more information about Lambda container images, see [Working with Lambda container images](https://docs.aws.amazon.com/lambda/latest/dg/images-create.html).
+
+### .zip file archives
+
+A .zip file archive includes your application code and its dependencies. When you author functions using the Lambda console or a toolkit, Lambda automatically creates a .zip file archive of your code.
+
+When you create functions with the Lambda API, command line tools, or the AWS SDKs, you must create a deployment package. You also must create a deployment package if your function uses a compiled language, or to add dependencies to your function. To deploy your function's code, you upload the deployment package from Amazon Simple Storage Service (Amazon S3) or your local machine.
+
+<ins>You can upload a .zip file as your deployment package using the Lambda console, AWS Command Line Interface (AWS CLI), or to an Amazon Simple Storage Service (Amazon S3) bucket.</ins>
+
+### Layers
+
+If you deploy your function code using a .zip file archive, you can use Lambda layers as a distribution mechanism for libraries, custom runtimes, and other function dependencies. Layers enable you to manage your in-development function code independently from the unchanging code and resources that it uses. You can configure your function to use layers that you create, layers that AWS provides, or layers from other AWS customers.
+
+<ins>You do not use layers with container images. Instead, you package your preferred runtime, libraries, and other dependencies into the container image when you build the image.</ins>
 
 ## private Networking
 
@@ -1590,5 +1617,131 @@ When you associate a CloudFront function with a CloudFront distribution, CloudFr
 ## Internet access to a Lambda function 
 ![internetToLambda](./img/internetAccessToLambda.png)
 [click here for detail](https://repost.aws/knowledge-center/internet-access-lambda-function)
+
+## Lambda function scaling
+As your functions receive more requests, Lambda automatically handles scaling the number of execution environments until you reach your account's concurrency limit. By default, Lambda provides your account with a total concurrency limit of 1,000 concurrent executions across all functions in an AWS Region
+
+### Understanding and visualizing concurrency
+Lambda invokes your function in a secure and isolated execution environment. To handle a request, Lambda must first initialize an execution environment (the Init phase), before using it to invoke your function (the Invoke phase):
+![concurrency-1-environment.png](./img/concurrency-1-environment.png)
+
+The previous diagram uses a rectangle to represent a single execution environment. When your function receives its very first request (represented by the yellow circle with label `1`), Lambda creates a new execution environment and runs the code outside your main handler during the Init phase. Then, Lambda runs your function's main handler code during the Invoke phase. During this entire process, this execution environment is busy and cannot process other requests.
+
+When Lambda finishes processing the first request, this execution environment can then process additional requests for the same function. For subsequent requests, Lambda doesn't need to re-initialize the environment.
+![concurrency-2-two-requests.png](./img/concurrency-2-two-requests.png)
+
+In the previous diagram, Lambda reuses the execution environment to handle the second request (represented by the yellow circle with label 2).
+
+So far, we've focused on just a single instance of your execution environment (that is, a concurrency of 1). In practice, Lambda may need to provision multiple execution environment instances in parallel to handle all incoming requests. When your function receives a new request, one of two things can happen:
+
+- If a pre-initialized execution environment instance is available, Lambda uses it to process the request.
+
+- Otherwise, Lambda creates a new execution environment instance to process the request.
+
+For example, let's explore what happens when your function receives 10 requests:
+![concurrency-3-ten-requests.png](./img/concurrency-3-ten-requests.png)
+
+In the previous diagram, each horizontal plane represents a single execution environment instance (labeled from A through F). Here's how Lambda handles each request:
+
+![LambdaBehaviorRequests1through10.png](./img/LambdaBehaviorRequests1through10.png)
+
+As your function receives more concurrent requests, Lambda scales up the number of execution environment instances in response. The following animation tracks the number of concurrent requests over time:
+
+![concurrency-4-animation.gif](./img/concurrency-4-animation.gif)
+
+By freezing the previous animation at six distinct points in time, we get the following diagram:
+
+![concurrency-5-animation-summary.png](./img/concurrency-5-animation-summary.png)
+
+In the previous diagram, we can draw a vertical line at any point in time and count the number of environments that intersect this line. This gives us the number of concurrent requests at that point in time. For example, at time t1, there are three active environments serving three concurrent requests. The maximum number of concurrent requests in this simulation occurs at time t4, when there are six active environments serving six concurrent requests.
+
+To summarize, your function's concurrency is the number of concurrent requests that it's handling at the same time. In response to an increase in your function's concurrency, Lambda provisions more execution environment instances to meet request demand.
+
+[**How to calculate concurrency**](https://docs.aws.amazon.com/lambda/latest/dg/lambda-concurrency.html#calculating-concurrency)
+
+### Reserved concurrency and provisioned concurrency
+
+By default, your account has a concurrency limit of 1,000 concurrent executions across all functions in a Region. Your functions share this pool of 1,000 concurrency on an on-demand basis. Your functions experiences throttling (that is, they start to drop requests) if you run out of available concurrency.
+
+- **Use reserved concurrency** to reserve a portion of your account's concurrency for a function. This is useful if you don't want other functions taking up all the available unreserved concurrency.
+
+- **Use provisioned concurrency** to pre-initialize a number of environment instances for a function. This is useful for reducing cold start latencies.
+
+
+### Reserved concurrency
+
+If you want to guarantee that a certain amount of concurrency is available for your function at any time, use reserved concurrency.
+
+Reserved concurrency is the maximum number of concurrent instances that you want to allocate to your function. When you dedicate reserved concurrency to a function, no other function can use that concurrency. In other words, setting reserved concurrency can impact the concurrency pool that's available to other functions. Functions that don't have reserved concurrency share the remaining pool of unreserved concurrency.
+
+Configuring reserved concurrency counts towards your overall account concurrency limit. There is no charge for configuring reserved concurrency for a function.
+
+To better understand reserved concurrency, consider the following diagram:
+![concurrency-6-reserved-concurrency.png](./img/concurrency-6-reserved-concurrency.png)
+
+In this diagram, your account concurrency limit for all the functions in this Region is at the default limit of 1,000. Suppose you have two critical functions, function-blue and `function-orange`, that routinely expect to get high invocation volumes. You decide to give 400 units of reserved concurrency to function-blue, and 400 units of reserved concurrency to `function-orange`. In this example, all other functions in your account must share the remaining 200 units of unreserved concurrency.
+
+From this example, notice that reserving concurrency has the following effects:
+
+- **Your function can scale independently of other functions in your account**. All of your account's functions in the same Region that don't have reserved concurrency share the pool of unreserved concurrency. Without reserved concurrency, other functions can potentially use up all of your available concurrency. This prevents critical functions from scaling up if needed.
+
+- **Your function can't scale out of control**. Reserved concurrency caps your function's maximum concurrency. This means that your function can't use concurrency reserved for other functions, or concurrency from the unreserved pool. You can reserve concurrency to prevent your function from using all the available concurrency in your account, or from overloading downstream resources.
+
+- **You may not be able to use all of your account's available concurrency**. Reserving concurrency counts towards your account concurrency limit, but this also means that other functions cannot use that chunk of reserved concurrency. If your function doesn't use up all of the concurrency that you reserve for it, you're effectively wasting that concurrency. This isn't an issue unless other functions in your account could benefit from the wasted concurrency.
+
+### Provisioned concurrency
+You use reserved concurrency to define the maximum number of execution environments reserved for a Lambda function. However, none of these environments come pre-initialized. As a result, your function invocations may take longer because Lambda must first initialize the new environment before being able to use it to invoke your function. `When Lambda has to initialize a new environment in order to carry out an invocation, this is known as a cold start. To mitigate cold starts, you can use provisioned concurrency`.
+
+Provisioned concurrency is the number of pre-initialized execution environments that you want to allocate to your function. If you set provisioned concurrency on a function, Lambda initializes that number of execution environments so that they are prepared to respond immediately to function requests.
+
+> Note
+>
+>Using provisioned concurrency incurs additional charges to your account. If you're working with the Java 11 or Java 17 runtimes, you can also use Lambda SnapStart to mitigate cold start issues at no additional cost. SnapStart uses cached snapshots of your execution environment to significantly improve startup performance. You cannot use both SnapStart and provisioned concurrency on the same function version. For more information about SnapStart features, limitations, and supported Regions, see *Improving startup performance with Lambda SnapStart*.
+
+When using provisioned concurrency, Lambda still recycles execution environments in the background. However, at any given time, Lambda always ensures that the number of pre-initialized environments is equal to the value of your function's provisioned concurrency setting. This behavior differs from reserved concurrency, where Lambda may completely terminate an environment after a period of inactivity. The following diagram illustrates this by comparing the lifecycle of a single execution environment when you configure your function using reserved concurrency compared to provisioned concurrency.
+
+![concurrency-7-reserved-vs-provisioned.png](./img/concurrency-7-reserved-vs-provisioned.png)
+
+The diagram has four points of interest:
+![tableReservedVsProvisionedConcurrency.png](./img/tableReservedVsProvisionedConcurrency.png)
+
+To better understand provisioned concurrency, consider the following diagram:
+
+![concurrency-8-provisioned-concurrency.png](./img/concurrency-8-provisioned-concurrency.png)
+
+In this diagram, you have an account concurrency limit of 1,000. You decide to give 400 units of provisioned concurrency to `function-orange`. All functions in your account, including `function-orange`, can use the remaining 600 units of unreserved concurrency.
+
+The diagram has five points of interest:
+
+- At t1, `function-orange` begins receiving requests. Since Lambda has pre-initialized 400 execution environment instances, `function-orange` is ready for immediate invocation.
+
+- At t2, `function-orange` reaches 400 concurrent requests. As a result, `function-orange` runs out of provisioned concurrency. However, since there's still unreserved concurrency available, Lambda can use this to handle additional requests to `function-orange` (there's **no throttling**). Lambda must create new instances to serve these requests, and your function may experience cold start latencies.
+
+- At t3, `function-orange` returns to 400 concurrent requests after a brief spike in traffic. Lambda is again able to handle all requests without cold start latencies.
+
+- At t4, functions in your account experience a burst in traffic. This burst can come from `function-orange` or any other function in your account. Lambda uses unreserved concurrency to handle these requests.
+
+- At t5, functions in your account reach the maximum concurrency limit of 1,000, and experience throttling.
+
+The previous example considered only provisioned concurrency. In practice, `you can set both provisioned concurrency and reserved concurrency on a function`. You might do this if you had a function that handles a consistent load of invocations on weekdays, but routinely sees spikes of traffic on weekends. In this case, you could use provisioned concurrency to set a baseline amount of environments to handle request during weekdays, and use reserved concurrency to handle the weekend spikes. Consider the following diagram:
+
+![concurrency-9-reserved-and-provisioned.png](./img/concurrency-9-reserved-and-provisioned.png)
+
+In this diagram, suppose that you configure 200 units of provisioned concurrency and 400 units of reserved concurrency for `function-orange`. Because you configured reserved concurrency, `function-orange` cannot use any of the 600 units of unreserved concurrency.
+
+This diagram has five points of interest:
+
+- At t1, `function-orange` begins receiving requests. Since Lambda has pre-initialized 200 execution environment instances, `function-orange` is ready for immediate invocation.
+
+- At t2, `function-orange` uses up all its provisioned concurrency. `function-orange` can continue serving requests using reserved concurrency, but these requests may experience cold start latencies.
+
+- At t3, `function-orange` reaches 400 concurrent requests. As a result, `function-orange` uses up all its reserved concurrency. Since `function-orange` cannot use unreserved concurrency, requests begin to throttle.
+
+- At t4, `function-orange` starts to receive fewer requests, and no longer throttles.
+
+- At t5, `function-orange` drops down to 200 concurrent requests, so all requests are again able to use provisioned concurrency (that is, no cold start latencies).
+
+Both reserved concurrency and provisioned concurrency count towards your account concurrency limit and Regional quotas. In other words, allocating reserved and provisioned concurrency can impact the concurrency pool that's available to other functions. Configuring provisioned concurrency incurs charges to your AWS account
+
 
 [lambda home](#aws-lambda)
