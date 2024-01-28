@@ -1,8 +1,10 @@
-### [SQS](#amazon-simple-queue-service)
-### [SNS](#amazon-simple-notification-service)
-### [Amazon Kinesis](#amazon-kinesis-1)
-### [Lamba](#aws-lambda)
-
+### Content
+[**SQS**](#amazon-simple-queue-service)<br>
+[**SNS**](#amazon-simple-notification-service)<br>
+[**Amazon Kinesis**](#amazon-kinesis)<br>
+[**Lamba**](#aws-lambda)<br>
+[**api gateway**](#amazon-api-gateway)<br>
+[**codeDeploy**](#what-is-codedeploy)<br>
 # AWS Integration & Messaging
 
 ## Amazon Simple Queue Service
@@ -1011,7 +1013,8 @@ To show the working solution of interactive analytics on streaming data, we use 
 
 ![kda-with-apache-flink](./img/BDB1684-image001.jpg)
 
-[click to setup](https://aws.amazon.com/blogs/big-data/get-started-with-flink-sql-apis-in-amazon-kinesis-data-analytics-studio/)
+[click to setup](https://aws.amazon.com/blogs/big-data/get-started-with-flink-sql-apis-in-amazon-kinesis-data-analytics-studio/)<br>
+[start](#content)
 
 ## AWS Lambda
 Run code without thinking about servers or clusters
@@ -1032,6 +1035,8 @@ Run code without thinking about servers or clusters
 - [**lambda scaling**](#lambda-function-scaling)
    - [Reserved concurrency](#reserved-concurrency)
    - [Provisioned concurrency](#provisioned-concurrency)
+- [**lambda and code deployment**](#lambda-and-code-deploy)
+- [**lambda function urls**](#lambda-function-urls)
 
 
 ### Why AWS Lambda?
@@ -1560,6 +1565,7 @@ CloudWatch Lambda Insights is a monitoring and troubleshooting solution for serv
 Lambda Insights uses a new CloudWatch Lambda Insights extension, which is provided as a Lambda layer. When you enable this extension on a Lambda function for a supported runtime, it collects system-level metrics and emits a single performance log event for every invocation of that Lambda function. CloudWatch uses embedded metric formatting to extract metrics from the log events.
 
 ### Using CodeGuru Profiler with your Lambda function
+![amazonCodeGuru](./img/Amazon-CodeGuru-ap-southeast-2.png)
 see the aws docs
 
 ## Customizing at the edge with Lambda@Edge
@@ -1743,5 +1749,270 @@ This diagram has five points of interest:
 
 Both reserved concurrency and provisioned concurrency count towards your account concurrency limit and Regional quotas. In other words, allocating reserved and provisioned concurrency can impact the concurrency pool that's available to other functions. Configuring provisioned concurrency incurs charges to your AWS account
 
+#### [lambda and code deploy](#bluegreen-deployment-on-an-aws-lambda-or-amazon-ecs-compute-platform)
+### Lambda function URLs
+A function URL is a dedicated HTTP(S) endpoint for your Lambda function. You can create and configure a function URL through the Lambda console or the Lambda API. When you create a function URL, Lambda automatically generates a unique URL endpoint for you. Once you create a function URL, its URL endpoint never changes. Function URL endpoints have the following format:
+``` bash
+https://<url-id>.lambda-url.<region>.on.aws
+```
+Function URLs are dual stack-enabled, supporting IPv4 and IPv6. After you configure a function URL for your function, you can invoke your function through its HTTP(S) endpoint via a web browser, curl, Postman, or any HTTP client.
+
+Lambda function URLs use [resource-based policies](https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html) for security and access control. Function URLs also support cross-origin resource sharing (CORS) configuration options.
+
+You can apply function URLs to any function alias, or to the `$LATEST` unpublished function version. You can't add a function URL to any other function version.
+
+### Security and auth model for Lambda function URLs
+You can control access to your Lambda function URLs using the `AuthType` parameter combined with resource-based policies attached to your specific function. The configuration of these two components determines who can invoke or perform other administrative actions on your function URL.
+
+The `AuthType` parameter determines how Lambda authenticates or authorizes requests to your function URL. When you configure your function URL, you must specify one of the following `AuthType` options:
+
+- `AWS_IAM` – Lambda uses AWS Identity and Access Management (IAM) to authenticate and authorize requests based on the IAM principal's identity policy and the function's resource-based policy. Choose this option if you want only authenticated users and roles to invoke your function via the function URL.
+
+- `NONE` – Lambda doesn't perform any authentication before invoking your function. <ins>However, your function's resource-based policy is always in effect and must grant public access before your function URL can receive requests. </ins>Choose this option to allow **public**, unauthenticated access to your function URL.
+
+In addition to `AuthType`, you can also use resource-based policies to grant permissions to other AWS accounts to invoke your function. For more information, see [Using resource-based policies for Lambda.](https://docs.aws.amazon.com/lambda/latest/dg/access-control-resource-based.html)
+
+For additional insights into security, you can use AWS Identity and Access Management Access Analyzer to get a comprehensive analysis of external access to your function URL. IAM Access Analyzer also monitors for new or updated permissions on your Lambda functions to help you identify permissions that grant public and cross-account access. IAM Access Analyzer is free to use for any AWS customer. 
+
 
 [lambda home](#aws-lambda)
+
+[start](#content)
+
+# Amazon API Gateway
+Create, maintain, and secure APIs at any scale
+
+**Amazon API Gateway** is a fully managed service that makes it easy for developers to create, publish, maintain, monitor, and secure APIs at any scale. APIs act as the "front door" for applications to access data, business logic, or functionality from your backend services. Using API Gateway, you can **create RESTful APIs and WebSocket APIs that enable real-time two-way communication applications**. API Gateway supports containerized and serverless workloads, as well as web applications.
+
+API Gateway handles all the tasks involved in accepting and processing up to hundreds of thousands of concurrent API calls, including traffic management, CORS support, authorization and access control, throttling, monitoring, and API version management. API Gateway has no minimum fees or startup costs. You pay for the API calls you receive and the amount of data transferred out and, with the API Gateway tiered pricing model, you can reduce your cost as your API usage scales.
+
+#### API Types
+| RESTful APIs | WEBSOCKET APIs |
+| ----- | ----- |
+| Build RESTful APIs optimized for serverless workloads and HTTP backends using HTTP APIs. HTTP APIs are the best choice for building APIs that only require API proxy functionality. If your APIs require API proxy functionality and API management features in a single solution, API Gateway also offers REST APIs. | Build real-time two-way communication applications, such as chat apps and streaming dashboards, with WebSocket APIs. API Gateway maintains a persistent connection to handle message transfer between your backend service and your clients. |
+
+![APIGateway](./img/New-API-GW-Diagram.c9fc9835d2a9aa00ef90d0ddc4c6402a2536de0d.png)
+
+### Benefits
+| | |
+| ----- | ---- |
+| **Efficient API development** <br><br> Run multiple versions of the same API simultaneously with API Gateway, allowing you to quickly iterate, test, and release new versions. You pay for calls made to your APIs and data transfer out, and there are no minimum fees or upfront commitments.|  **Performance at any scale**<br><br>Provide end users with the lowest possible latency for API requests and responses by taking advantage of our global network of edge locations using Amazon CloudFront. Throttle traffic and authorize API calls to ensure that backend operations withstand traffic spikes and backend systems are not unnecessarily called. |
+|  **Cost savings at scale**<br><br>API Gateway provides a tiered pricing model for API requests. With an API Requests price as low as $0.90 per million requests at the highest tier, you can decrease your costs as your API usage increases per region across your AWS accounts. |  **Easy monitoring** <br><br>Monitor performance metrics and information on API calls, data latency, and error rates from the API Gateway dashboard, which allows you to visually monitor calls to your services using Amazon CloudWatch. |
+| **Flexible security controls** <br><br>Authorize access to your APIs with AWS Identity and Access Management (IAM) and Amazon Cognito. If you use OAuth tokens, API Gateway offers native OIDC and OAuth2 support. To support custom authorization requirements, you can execute a Lambda authorizer from AWS Lambda. |  **RESTful API options**<br><br>Create RESTful APIs using HTTP APIs or REST APIs. HTTP APIs are the best way to build APIs for a majority of use cases—they're up to 71% cheaper than REST APIs. If your use case requires API proxy functionality and management features in a single solution, you can use REST APIs. |
+
+
+### API Gateway use cases
+An API Gateway REST API is made up of resources and methods. A resource is a logical entity that an app can access through a resource path. A method corresponds to a REST API request that is submitted by the user of your API and the response returned to the user.
+
+For example, `/incomes` could be the path of a resource representing the income of the app user. A resource can have one or more operations that are defined by appropriate HTTP verbs such as GET, POST, PUT, PATCH, and DELETE. A combination of a resource path and an operation identifies a method of the API. For example, a `POST /incomes` method could add an income earned by the caller, and a `GET /expenses` method could query the reported expenses incurred by the caller.
+
+The app doesn't need to know where the requested data is stored and fetched from on the backend. In API Gateway REST APIs, the frontend is encapsulated by method requests and method responses. The API interfaces with the backend by means of integration requests and integration responses.
+
+For example, with DynamoDB as the backend, the API developer sets up the integration request to forward the incoming method request to the chosen backend. The setup includes specifications of an appropriate DynamoDB action, required IAM role and policies, and required input data transformation. The backend returns the result to API Gateway as an integration response.
+
+To route the integration response to an appropriate method response (of a given HTTP status code) to the client, you can configure the integration response to map required response parameters from integration to method. You then translate the output data format of the backend to that of the frontend, if necessary. API Gateway enables you to define a schema or model for the payload
+
+to facilitate setting up the body mapping template.
+
+API Gateway provides REST API management functionality such as the following:
+
+    Support for generating SDKs and creating API documentation using API Gateway extensions to OpenAPI
+
+    Throttling of HTTP requests
+
+
+
+[start](#content)
+
+## What is CodeDeploy?
+
+CodeDeploy is a deployment service that automates application deployments to Amazon EC2 instances, on-premises instances, serverless Lambda functions, or Amazon ECS services.
+
+You can deploy a nearly unlimited variety of application content, including:
+
+- Code
+
+- Serverless AWS Lambda functions
+
+- Web and configuration files
+
+- Executables
+
+- Packages
+
+- Scripts
+
+- Multimedia files
+
+<ins>CodeDeploy can deploy application content that runs on a server and is stored in Amazon S3 buckets, GitHub repositories, or Bitbucket repositories.</ins> CodeDeploy can also deploy a serverless Lambda function. You do not need to make changes to your existing code before you can use CodeDeploy. 
+
+CodeDeploy makes it easier for you to:
+
+- Rapidly release new features.
+
+- Update AWS Lambda function versions.
+
+- Avoid downtime during application deployment.
+
+- Handle the complexity of updating your applications, without many of the risks associated with error-prone manual deployments.
+
+The service scales with your infrastructure so you can easily deploy to one instance or thousands.
+
+CodeDeploy works with various systems for configuration management, source control, [continuous integration](https://aws.amazon.com/devops/continuous-integration/)
+, [continuous delivery](https://aws.amazon.com/devops/continuous-delivery/), and continuous deployment. For more information, see [Product integrations](https://aws.amazon.com/codedeploy/product-integrations/)
+
+
+The CodeDeploy console also provides a way to quickly search for your resources, such as repositories, build projects, deployment applications, and pipelines. Choose Go to resource or press the / key, and then type the name of the resource. Any matches appear in the list. Searches are case insensitive. You only see resources that you have permissions to view. 
+
+### Benefits of AWS CodeDeploy
+
+CodeDeploy offers these benefits:
+
+- **Server, serverless, and container applications**. CodeDeploy lets you deploy both traditional applications on servers and applications that deploy a serverless AWS Lambda function version or an Amazon ECS application.
+
+- **Automated deployments**. CodeDeploy fully automates your application deployments across your development, test, and production environments. CodeDeploy scales with your infrastructure so that you can deploy to one instance or thousands.
+
+- **Minimize downtime**. If your application uses the EC2/On-Premises compute platform, `CodeDeploy helps maximize your application availability`. During an in-place deployment, CodeDeploy performs a rolling update across Amazon EC2 instances. You can specify the number of instances to be taken offline at a time for updates. During a blue/green deployment, the latest application revision is installed on replacement instances. Traffic is rerouted to these instances when you choose, either immediately or as soon as you are done testing the new environment. For both deployment types, CodeDeploy tracks application health according to rules you configure.
+
+- **Stop and roll back**. You can automatically or manually stop and roll back deployments if there are errors.
+
+- **Centralized control**. You can launch and track the status of your deployments through the CodeDeploy console or the AWS CLI. You receive a report that lists when each application revision was deployed and to which Amazon EC2 instances.
+
+- **Easy to adopt**. CodeDeploy is platform-agnostic and works with any application. You can easily reuse your setup code. CodeDeploy can also integrate with your software release process or continuous delivery toolchain.
+
+- **Concurrent deployments**. If you have more than one application that uses the EC2/On-Premises compute platform, CodeDeploy can deploy them concurrently to the same set of instances.
+
+
+### Overview of CodeDeploy compute platforms
+
+CodeDeploy is able to deploy applications to three compute platforms:
+
+- **EC2/On-Premises:** Describes instances of physical servers that can be Amazon EC2 cloud instances, on-premises servers, or both. Applications created using the EC2/On-Premises compute platform can be composed of executable files, configuration files, images, and more.
+
+   Deployments that use the EC2/On-Premises compute platform manage the way in which traffic is directed to instances by using an in-place or blue/green deployment type. For more information, see *Overview of CodeDeploy deployment types.*
+
+- **AWS Lambda:** Used to deploy applications that consist of an updated version of a Lambda function. AWS Lambda manages the Lambda function in a serverless compute environment made up of a high-availability compute structure. All administration of the compute resources is performed by AWS Lambda. For more information, see [Serverless Computing and Applications](https://aws.amazon.com/serverless/)
+
+   For more information about AWS Lambda and Lambda functions, see AWS Lambda
+
+   You can manage the way in which traffic is shifted to the updated Lambda function versions during a deployment by choosing a `canary, linear, or all-at-once `configuration.
+
+- **Amazon ECS:** Used to deploy an Amazon ECS containerized application as a task set. CodeDeploy performs a blue/green deployment by installing an updated version of the application as a new replacement task set. CodeDeploy reroutes production traffic from the original application task set to the replacement task set. The original task set is terminated after a successful deployment. For more information about Amazon ECS, see Amazon Elastic Container Service
+
+   You can manage the way in which traffic is shifted to the updated task set during a deployment by choosing a canary, linear, or all-at-once configuration.
+   >Note
+   >
+   >Amazon ECS blue/green deployments are supported using both CodeDeploy and AWS CloudFormation. Details for these deployments are described in subsequent sections.
+
+| CodeDeploy component | EC2/On-Premises | AWS Lambda | Amazon ECS |
+| ----- | ---- | ---- | --- |
+| Deployment group | Deploys a revision to a set of instances. | Deploys a new version of a serverless Lambda function on a high-availability compute infrastructure. | Specifies the Amazon ECS service with the containerized application to deploy as a task set, a production and optional test listener used to serve traffic to the deployed application, when to reroute traffic and terminate the deployed application's original task set, and optional trigger, alarm, and rollback settings. |
+| Deployment | Deploys a new revision that consists of an application and AppSpec file. The AppSpec specifies how to deploy the application to the instances in a deployment group. | Shifts production traffic from one version of a Lambda function to a new version of the same function. The AppSpec file specifies which Lambda function version to deploy. | Deploys an updated version of an Amazon ECS containerized application as a new, replacement task set. CodeDeploy reroutes production traffic from the task set with the original version to the new replacement task set with the updated version. When the deployment completes, the original task set is terminated. |
+| Deployment configuration | Settings that determine the deployment speed and the minimum number of instances that must be healthy at any point during a deployment. | Settings that determine how traffic is shifted to the updated Lambda function versions. | Settings that determine how traffic is shifted to the updated Amazon ECS task set. |
+| Revision | A combination of an AppSpec file and application files, such as executables, configuration files, and so on. | An AppSpec file that specifies which Lambda function to deploy and Lambda functions that can run validation tests during deployment lifecycle event hooks. | An AppSpec file that specifies:<ul><li>The Amazon ECS task definition for the Amazon ECS service with the containerized application to deploy.</li><li>The container where your updated application is deployed.</li><li>A port for the container where production traffic is rerouted.</li><li>Optional network configuration settings and Lambda functions that can run validation tests during deployment lifecycle event hooks.</li></ul> |
+| Application | A collection of deployment groups and revisions. An EC2/On-Premises application uses the EC2/On-Premises compute platform. | A collection of deployment groups and revisions. An application used for an AWS Lambda deployment uses the serverless AWS Lambda compute platform. | A collection of deployment groups and revisions. An application used for an Amazon ECS deployment uses the Amazon ECS compute platform. |
+
+## Overview of CodeDeploy deployment types
+
+- **In-place deployment:** The application on each instance in the deployment group is stopped, the latest application revision is installed, and the new version of the application is started and validated. You can use a load balancer so that each instance is deregistered during its deployment and then restored to service after the deployment is complete. Only deployments that use the EC2/On-Premises compute platform can use in-place deployments. For more information about in-place deployments, see [Overview of an in-place deployment](#overview-of-an-in-place-deployment).
+
+- **Blue/green deployment:** The behavior of your deployment depends on which compute platform you use:
+
+   - **Blue/green on an EC2/On-Premises compute platform**: The instances in a deployment group (the original environment) are replaced by a different set of instances (the replacement environment) using these steps:
+
+      - Instances are provisioned for the replacement environment.
+
+      - The latest application revision is installed on the replacement instances.
+
+      - An optional wait time occurs for activities such as application testing and system verification.
+
+      - Instances in the replacement environment are registered with one or more Elastic Load Balancing load balancers, causing traffic to be rerouted to them. Instances in the original environment are deregistered and can be terminated or kept running for other uses.
+
+         >Note
+         >
+         >If you use an EC2/On-Premises compute platform, be aware that blue/green deployments work with Amazon EC2 instances only.
+
+   - **Blue/green on an AWS Lambda or Amazon ECS compute platform:** Traffic is shifted in increments according to a <ins>canary, linear, or all-at-once deployment</ins> configuration.
+
+   - **Blue/green deployments through AWS CloudFormation:** Traffic is shifted from your current resources to your updated resources as part of an AWS CloudFormation stack update. Currently, only ECS blue/green deployments are supported.
+
+For more information about blue/green deployments, see [Overview of a blue/green deployment](#overview-of-a-bluegreen-deployment).
+
+### Overview of an in-place deployment
+
+> Note
+>
+>AWS Lambda and Amazon ECS deployments cannot use an in-place deployment type.
+
+Here's how an in-place deployment works:
+
+1. First, you create deployable content on your local development machine or similar environment, and then you add an application specification file (`AppSpec file`). The AppSpec file is unique to CodeDeploy. It defines the deployment actions you want CodeDeploy to execute. You bundle your deployable content and the AppSpec file into an archive file, and then upload it to an Amazon S3 bucket or a GitHub repository. This archive file is called an application revision (or simply a revision).
+
+2.  Next, you provide CodeDeploy with information about your deployment, such as which Amazon S3 bucket or GitHub repository to pull the revision from and to which set of Amazon EC2 instances to deploy its contents. CodeDeploy calls a set of Amazon EC2 instances a deployment group. A deployment group contains individually tagged Amazon EC2 instances, Amazon EC2 instances in Amazon EC2 Auto Scaling groups, or both.
+
+
+      Each time you successfully upload a new application revision that you want to deploy to the deployment group, that bundle is set as the target revision for the deployment group. In other words, the application revision that is currently targeted for deployment is the target revision. This is also the revision that is pulled for automatic deployments.
+
+3. Next, the CodeDeploy agent on each instance polls CodeDeploy to determine what and when to pull from the specified Amazon S3 bucket or GitHub repository.
+
+4. Finally, the CodeDeploy agent on each instance pulls the target revision from the Amazon S3 bucket or GitHub repository and, using the instructions in the AppSpec file, deploys the contents to the instance.
+
+CodeDeploy keeps a record of your deployments so that you can get deployment status, deployment configuration parameters, instance health, and so on.
+
+### Overview of a blue/green deployment
+
+A blue/green deployment is used to update your applications while minimizing interruptions caused by the changes of a new application version. CodeDeploy provisions your new application version alongside the old version before rerouting your production traffic.
+
+- **AWS Lambda**: Traffic is shifted from one version of a Lambda function to a new version of the same Lambda function.
+
+- **Amazon ECS**: Traffic is shifted from a task set in your Amazon ECS service to an updated, replacement task set in the same Amazon ECS service.
+
+- **EC2/On-Premises**: Traffic is shifted from one set of instances in the original environment to a replacement set of instances.
+
+All AWS Lambda and Amazon ECS deployments are blue/green. An EC2/On-Premises deployment can be in-place or blue/green. A blue/green deployment offers a number of advantages over an in-place deployment:
+
+- You can install and test an application in the new replacement environment and deploy it to production simply by rerouting traffic.
+
+- If you're using the EC2/On-Premises compute platform, switching back to the most recent version of an application is faster and more reliable. That's because traffic can be routed back to the original instances as long as they have not been terminated. With an in-place deployment, versions must be rolled back by redeploying the previous version of the application.
+
+- If you're using the EC2/On-Premises compute platform, new instances are provisioned for a blue/green deployment and reflect the most up-to-date server configurations. This helps you avoid the types of problems that sometimes occur on long-running instances.
+
+- If you're using the AWS Lambda compute platform, you control how traffic is shifted from your original AWS Lambda function version to your new AWS Lambda function version.
+
+- If you're using the Amazon ECS compute platform, you control how traffic is shifted from your original task set to your new task set.
+
+A blue/green deployment with AWS CloudFormation can use one of the following methods:
+
+- **AWS CloudFormation templates for deployments**: When you configure deployments with AWS CloudFormation templates, your deployments are triggered by AWS CloudFormation updates. When you change a resource and upload a template change, a stack update in AWS CloudFormation initiates the new deployment. For a list of resources you can use in AWS CloudFormation templates, see [AWS CloudFormation templates for CodeDeploy](https://docs.aws.amazon.com/codedeploy/latest/userguide/reference-cloudformation-templates.html) reference.
+
+- **Blue/green deployments through AWS CloudFormation**: You can use AWS CloudFormation to manage your blue/green deployments through stack updates. You define both your blue and green resources, in addition to specifying the traffic routing and stabilization settings, within the stack template. Then, if you update selected resources during a stack update, AWS CloudFormation generates all the necessary green resources, shifts the traffic based on the specified traffic routing parameters, and deletes the blue resources. For more information, see [Automate Amazon ECS blue/green deployments through CodeDeploy using AWS CloudFormation in the AWS CloudFormation](https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/blue-green.html) User Guide.
+
+
+#### Blue/Green deployment on an AWS Lambda or Amazon ECS compute platform
+
+If you're using the AWS Lambda or Amazon ECS compute platform, you must indicate how traffic is shifted from the original AWS Lambda function or Amazon ECS task set to the new function or task set. To indicate how traffic is shifted, you must specify one of the following deployment configurations:
+
+- canary
+
+- linear
+
+- all-at-once
+
+### Canary deployment
+ The purpose of a canary deployment is to reduce the risk of deploying a new version that impacts the workload. <ins>The method will incrementally deploy the new version, making it visible to new users in a slow fashion.</ins> As you gain confidence in the deployment, you will deploy it to replace the current version in its entirety.
+
+ #### Implement Canary Deployment
+
+- Use a router or load balancer that allows you to send a small percentage of users to the new version.
+- Use a dimension on your KPIs to indicate which version is reporting the metrics.
+- Use the metric to measure the success of the deployment; this indicates whether the deployment should continue or roll back.
+- Increase the load on the new version until either all users are on the new version or you have fully rolled back
+![canaryReleaseOne](./img/canaryReleaseOne.png)
+When you are happy with the new version, you can start routing a few selected users to it. There are different strategies to choose which users will see the new version: a simple strategy is to use a random sample; some companies choose to release the new version to their internal users and employees before releasing to the world; another more sophisticated approach is to choose users based on their profile and other demographics. 
+![canaryReleaseTwo](./img/canaryReleaseTwo.png)
+![canaryReleaseThree](./img/canaryReleaseThree.png)
+
+### Linear deployment
+Linear deployment means traffic is shifted in equal increments with an equal number of minutes between each increment. You can choose from predefined linear options that specify the percentage of traffic shifted in each increment and the number of minutes between each increment.
+
+[code deploy home](#what-is-codedeploy)
