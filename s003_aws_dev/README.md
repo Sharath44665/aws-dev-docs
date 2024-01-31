@@ -1782,6 +1782,12 @@ For additional insights into security, you can use AWS Identity and Access Manag
 # Amazon API Gateway
 Create, maintain, and secure APIs at any scale
 
+[concepts](#amazon-api-gateway-concepts)<br>
+[choosing between REST APIs and HTTP APIs](#choosing-between-rest-apis-and-http-apis)<br>
+[getting started with console](#getting-started-with-the-rest-api-console)<br>
+[setting up stage variables](#setting-up-stage-variables-for-a-rest-api-deployment)
+
+
 **Amazon API Gateway** is a fully managed service that makes it easy for developers to create, publish, maintain, monitor, and secure APIs at any scale. APIs act as the "front door" for applications to access data, business logic, or functionality from your backend services. Using API Gateway, you can **create RESTful APIs and WebSocket APIs that enable real-time two-way communication applications**. API Gateway supports containerized and serverless workloads, as well as web applications.
 
 API Gateway handles all the tasks involved in accepting and processing up to hundreds of thousands of concurrent API calls, including traffic management, CORS support, authorization and access control, throttling, monitoring, and API version management. API Gateway has no minimum fees or startup costs. You pay for the API calls you receive and the amount of data transferred out and, with the API Gateway tiered pricing model, you can reduce your cost as your API usage scales.
@@ -1816,13 +1822,257 @@ to facilitate setting up the body mapping template.
 
 API Gateway provides REST API management functionality such as the following:
 
-    Support for generating SDKs and creating API documentation using API Gateway extensions to OpenAPI
+- Support for generating SDKs and creating API documentation using API Gateway extensions to OpenAPI
 
-    Throttling of HTTP requests
+- Throttling of HTTP requests
+
+### Use API Gateway to create HTTP APIs
+
+HTTP APIs enable you to create RESTful APIs with lower latency and lower cost than REST APIs.
+
+You can use HTTP APIs to send requests to AWS Lambda functions or to any publicly routable HTTP endpoint.
+
+For example, you can create an HTTP API that integrates with a Lambda function on the backend. When a client calls your API, API Gateway sends the request to the Lambda function and returns the function's response to the client.
+
+HTTP APIs support OpenID Connect
+and OAuth 2.0 authorization. They come with built-in support for cross-origin resource sharing (CORS) and automatic deployments.
+
+### Use API Gateway to create WebSocket APIs
+
+In a WebSocket API, the client and the server can both send messages to each other at any time. Backend servers can easily push data to connected users and devices, avoiding the need to implement complex polling mechanisms.
+
+For example, you could build a serverless application using an API Gateway WebSocket API and AWS Lambda to send and receive messages to and from individual users or groups of users in a chat room. Or you could invoke backend services such as AWS Lambda, Amazon Kinesis, or an HTTP endpoint based on message content.
+
+You can use API Gateway WebSocket APIs to build secure, real-time communication applications without having to provision or manage any servers to manage connections or large-scale data exchanges. Targeted use cases include real-time applications such as the following:
+
+- Chat applications
+
+- Real-time dashboards such as stock tickers
+
+- Real-time alerts and notifications
+
+API Gateway provides WebSocket API management functionality such as the following:
+
+- Monitoring and throttling of connections and messages
+
+- Using AWS X-Ray to trace messages as they travel through the APIs to backend services
+
+- Easy integration with HTTP/HTTPS endpoints
+
+### Calling an API Gateway API
+
+An app developer works with the API Gateway service component for API execution, named `execute-api`, to invoke an API that was created or deployed in API Gateway. The underlying programming entities are exposed by the created API. There are several ways to call such an API. To learn more, see *Invoking a REST API in Amazon API* Gateway and *Invoking a WebSocket API*.
+
+## Amazon API Gateway concepts
+
+**API Gateway**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;API Gateway is an AWS service that supports the following:
+
+- Creating, deploying, and managing a RESTful application programming interface (API) to expose backend HTTP endpoints, AWS Lambda functions, or other AWS services.
+
+- Creating, deploying, and managing a WebSocket API to expose AWS Lambda functions or other AWS services.
+
+- Invoking exposed API methods through the frontend HTTP and WebSocket endpoints.
+
+**API Gateway REST API**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A collection of HTTP resources and methods that are integrated with backend HTTP endpoints, Lambda functions, or other AWS services. You can deploy this collection in one or more stages. Typically, API resources are organized in a resource tree according to the application logic. Each API resource can expose one or more API methods that have unique HTTP verbs supported by API Gateway. 
+
+**API Gateway HTTP API**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A collection of routes and methods that are integrated with backend HTTP endpoints or Lambda functions. You can deploy this collection in one or more stages. Each route can expose one or more API methods that have unique HTTP verbs supported by API Gateway
+
+**API Gateway WebSocket API**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A collection of WebSocket routes and route keys that are integrated with backend HTTP endpoints, Lambda functions, or other AWS services. You can deploy this collection in one or more stages. API methods are invoked through frontend WebSocket connections that you can associate with a registered custom domain name.
 
 
+**API deployment**
 
-[start](#content)
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A point-in-time snapshot of your API Gateway API. To be available for clients to use, the deployment must be associated with one or more API stages.
+
+**API developer**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Your AWS account that owns an API Gateway deployment (for example, a service provider that also supports programmatic access).
+
+**API endpoint**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A hostname for an API in API Gateway that is deployed to a specific Region. The hostname is of the form `{api-id}.execute-api.{region}.amazonaws.com`. The following types of API endpoints are supported:
+
+- Edge-optimized API endpoint
+
+- Private API endpoint
+
+- Regional API endpoint
+
+**API key**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;An alphanumeric string that API Gateway uses to identify an app developer who uses your REST or WebSocket API. API Gateway can generate API keys on your behalf, or you can import them from a CSV file. You can use API keys together with Lambda authorizers or usage plans to control access to your APIs.
+
+**API stage**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A logical reference to a lifecycle state of your API (for example, 'dev', 'prod', 'beta', 'v2'). API stages are identified by API ID and stage name.
+
+
+**Edge-optimized API endpoint**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The default hostname of an API Gateway API that is deployed to the specified Region while using a CloudFront distribution to facilitate client access typically from across AWS Regions. API requests are routed to the nearest CloudFront Point of Presence (POP), which typically improves connection time for geographically diverse clients.
+
+   
+**Integration request**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The internal interface of a WebSocket API route or REST API method in API Gateway, in which you map the body of a route request or the parameters and body of a method request to the formats required by the backend.
+
+**Integration response**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The internal interface of a WebSocket API route or REST API method in API Gateway, in which you map the status codes, headers, and payload that are received from the backend to the response format that is returned to a client app.
+
+
+**Mapping template**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A script in Velocity Template Language (VTL) that transforms a request body from the frontend data format to the backend data format, or that transforms a response body from the backend data format to the frontend data format. Mapping templates can be specified in the integration request or in the integration response. They can reference data made available at runtime as context and stage variables.
+
+The mapping can be as simple as an identity transform that passes the headers or body through the integration as-is from the client to the backend for a request. The same is true for a response, in which the payload is passed from the backend to the client.
+
+**Method request**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The public interface of an API method in API Gateway that defines the parameters and body that an app developer must send in requests to access the backend through the API.
+
+**Method response**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The public interface of a REST API that defines the status codes, headers, and body models that an app developer should expect in responses from the API.
+
+**Mock integration**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;In a mock integration, API responses are generated from API Gateway directly, without the need for an integration backend. As an API developer, you decide how API Gateway responds to a mock integration request. For this, you configure the method's integration request and integration response to associate a response with a given status code.
+
+**Model**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A data schema specifying the data structure of a request or response payload. A model is required for generating a strongly typed SDK of an API. It is also used to validate payloads. A model is convenient for generating a sample mapping template to initiate creation of a production mapping template. Although useful, a model is not required for creating a mapping template.
+
+**Private API endpoint**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;An API endpoint that is exposed through interface VPC endpoints and allows a client to securely access private API resources inside a VPC. Private APIs are isolated from the public internet, and they can only be accessed using VPC endpoints for API Gateway that have been granted access.
+
+**Private integration**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;An API Gateway integration type for a client to access resources inside a customer's VPC through a private REST API endpoint without exposing the resources to the public internet.
+
+**Proxy integration**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;A simplified API Gateway integration configuration. You can set up a proxy integration as an HTTP proxy integration or a Lambda proxy integration.
+
+For HTTP proxy integration, API Gateway passes the entire request and response between the frontend and an HTTP backend. For Lambda proxy integration, API Gateway sends the entire request as input to a backend Lambda function. API Gateway then transforms the Lambda function output to a frontend HTTP response.
+
+In REST APIs, proxy integration is most commonly used with a proxy resource, which is represented by a greedy path variable (for example, `{proxy+})` combined with a catch-all `ANY` method.
+
+**Quick create**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;You can use quick create to simplify creating an HTTP API. Quick create creates an API with a Lambda or HTTP integration, a default catch-all route, and a default stage that is configured to automatically deploy changes. For more information, see *Create an HTTP API by using the AWS CLI*.
+
+**Regional API endpoint**
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;The host name of an API that is deployed to the specified Region and intended to serve clients, such as EC2 instances, in the same AWS Region. API requests are targeted directly to the Region-specific API Gateway API without going through any CloudFront distribution. For in-Region requests, a Regional endpoint bypasses the unnecessary round trip to a CloudFront distribution.
+
+In addition, you can apply latency-based routing on Regional endpoints to deploy an API to multiple Regions using the same Regional API endpoint configuration, set the same custom domain name for each deployed API, and configure latency-based DNS records in Route 53 to route client requests to the Region that has the lowest latency.
+
+## Choosing between REST APIs and HTTP APIs
+REST APIs and HTTP APIs are both RESTful API products. REST APIs support more features than HTTP APIs, while HTTP APIs are designed with minimal features so that they can be offered at a lower price. <ins>Choose REST APIs if you need features such as API keys, per-client throttling, request validation, AWS WAF integration, or private API endpoints.</ins> *Choose HTTP APIs if you don't need the features included with REST APIs*.
+
+## Getting started with the REST API console
+In this getting started exercise, you create a serverless REST API using the API Gateway REST API console. Serverless APIs let you focus on your applications instead of spending your time provisioning and managing servers. This exercise should take less than 20 minutes to complete, and is possible within the AWS Free Tier
+
+
+First, you create a Lambda function using the Lambda console. Next, you create a REST API using the API Gateway REST API console. Then, you create an API method and integrate it with a Lambda function using a Lambda proxy integration. Finally, you deploy and invoke your API.
+
+When you invoke your REST API, API Gateway routes the request to your Lambda function. Lambda runs the function and returns a response to API Gateway. API Gateway then returns that response to you.
+
+![apigatewayGettingStarted](./img/getting-started-overview-rest.png)
+
+REST API gateway pics:
+![createMethod](./img/API-Gateway-Create-method.png)
+
+![apiGatewayResources](./img/apigatewayResources254xshffjasfl.png)
+
+![invokeAPIGateway](./img/getting-started-rest-invoke-url.png)
+
+HTTP API pics:
+![createHTTPAPIGateway](./img/API%20Gateway%20-%20Create%20HTTP%20API%20Step%201.png)
+
+![step2](./img/API%20Gateway%20-%20Create%20HTTP%20API%20Step%202.png)
+
+![step3](./img/API%20Gateway%20-%20Create%20HTTP%20API%20Step%203.png)
+
+InvokeAPI
+![invokeAPI](./img/gettingStartedInvokeUrl333fsjkafj.png)
+
+OUTPUT:
+![output](./img/LastScreenshot_20240129_202357.png)
+
+### Setting up stage variables for a REST API deployment
+Stage variables are name-value pairs that you can define as configuration attributes associated with a deployment stage of a REST API. They act like environment variables and can be used in your API setup and mapping templates.
+
+For example, you can define a stage variable in a stage configuration, and then set its value as the URL string of an HTTP integration for a method in your REST API. Later, you can reference the URL string by using the associated stage variable name from the API setup. By doing this, you can use the same API setup with a different endpoint at each stage by resetting the stage variable value to the corresponding URLs.
+
+You can also access stage variables in the mapping templates, or pass configuration parameters to your AWS Lambda or HTTP backend.
+
+**<ins>Use cases</ins>**
+
+With deployment stages in API Gateway, you can manage multiple release stages for each API, such as alpha, beta, and production. Using stage variables you can configure an API deployment stage to interact with different backend endpoints.
+
+For example, your API can pass a GET request as an HTTP proxy to the backend web host (for example, `http://example.com`). In this case, the backend web host is configured in a stage variable so that when developers call your production endpoint, API Gateway calls example.com. When you call your beta endpoint, API Gateway uses the value configured in the stage variable for the beta stage, and calls a different web host (for example, `beta.example.com`). Similarly, stage variables can be used to specify a different AWS Lambda function name for each stage in your API.
+
+You can also use stage variables to pass configuration parameters to a Lambda function through your mapping templates. For example, you might want to reuse the same Lambda function for multiple stages in your API, but the function should read data from a different Amazon DynamoDB table depending on which stage is being called. In the mapping templates that generate the request for the Lambda function, you can use stage variables to pass the table name to Lambda.
+
+Use cases
+
+With deployment stages in API Gateway, you can manage multiple release stages for each API, such as alpha, beta, and production. Using stage variables you can configure an API deployment stage to interact with different backend endpoints.
+
+For example, your API can pass a GET request as an HTTP proxy to the backend web host (for example, `http://example.com`). In this case, the backend web host is configured in a stage variable so that when developers call your production endpoint, API Gateway calls example.com. When you call your beta endpoint, API Gateway uses the value configured in the stage variable for the beta stage, and calls a different web host (for example, `beta.example.com`). Similarly, stage variables can be used to specify a different AWS Lambda function name for each stage in your API.
+
+![usecasesStageVariables](./img/apiGatewayStageVariablesUsecases4fkdjfkfdjsl.png)
+
+**Examples**
+
+To use a stage variable to customize the HTTP integration endpoint, you must first configure a stage variable of a specified name (for example, `url`), and then assign it a value, (for example, `example.com`). Next, from your method configuration, set up an HTTP proxy integration. Instead of entering the endpoint's URL, you can tell API Gateway to use the stage variable value, `http://${stageVariables.url}`. This value tells API Gateway to substitute your stage variable `${}` at runtime, depending on which stage your API is running.
+
+You can reference stage variables in a similar way to specify a Lambda function name, an AWS Service Proxy path, or an AWS role ARN in the credentials field.
+
+When specifying a Lambda function name as a stage variable value, you must configure the permissions on the Lambda function manually. When you specify a Lambda function in the API Gateway console, a AWS CLI command will pop-up to configure the proper permissions. You can also use the AWS Command Line Interface (AWS CLI) to do this.
+
+``` bash
+aws lambda add-permission --function-name "arn:aws:lambda:us-east-2:123456789012:function:my-function" --source-arn "arn:aws:execute-api:us-east-2:123456789012:api_id/*/HTTP_METHOD/resource" --principal apigateway.amazonaws.com --statement-id apigateway-access --action lambda:InvokeFunction
+```
+
+## Set up an API Gateway canary release deployment
+[Canary release](#implement-canary-deployment) is a software development strategy in which a new version of an API (as well as other software) is deployed for testing purposes, and the base version remains deployed as a production release for normal operations on the same stage. For purposes of discussion, we refer to the base version as a production release in this documentation. Although this is reasonable, you are free to apply canary release on any non-production version for testing.
+
+In a canary release deployment, total API traffic is separated at random into a production release and a canary release with a pre-configured ratio. Typically, the canary release receives a small percentage of API traffic and the production release takes up the rest. The updated API features are only visible to API traffic through the canary. You can adjust the canary traffic percentage to optimize test coverage or performance.
+
+By keeping canary traffic small and the selection random, most users are not adversely affected at any time by potential bugs in the new version, and no single user is adversely affected all the time.
+
+After the test metrics pass your requirements, you can promote the canary release to the production release and disable the canary from the deployment. This makes the new features available in the production stage. 
+
+### Canary release deployment in API Gateway
+
+In API Gateway, a canary release deployment uses the deployment stage for the production release of the base version of an API, and attaches to the stage a canary release for the new versions, relative to the base version, of the API. The stage is associated with the initial deployment and the canary with subsequent deployments. At the beginning, both the stage and the canary point to the same API version. We use stage and production release interchangeably and use canary and canary release interchangeably throughout this section.
+
+To deploy an API with a canary release, you create a canary release deployment by adding *canary settings* to the *stage* of a regular [deployment](https://docs.aws.amazon.com/apigateway/latest/api/API_Deployment.html). The canary settings describe the underlying canary release and the stage represents the production release of the API within this deployment. To add canary settings, set `canarySettings` on the deployment stage and specify the following:
+
+- A deployment ID, initially identical to the ID of the base version deployment set on the stage.
+
+- A *percentage of API traffic*, between 0.0 and 100.0 inclusive, for the canary release.
+
+- *Stage variables for the canary release* that can override production release stage variables.
+
+- The use of the *stage cache* for canary requests, if the *useStageCache* is set and API caching is enabled on the stage.
+
+ After a canary release is enabled, the deployment stage cannot be associated with another non-canary release deployment until the canary release is disabled and the canary settings removed from the stage.
+
+When you enable API execution logging, the canary release has its own logs and metrics generated for all canary requests. They are reported to a production stage CloudWatch Logs log group as well as a canary-specific CloudWatch Logs log group. The same applies to access logging. The separate canary-specific logs are helpful to validate new API changes and decide whether to accept the changes and promote the canary release to the production stage, or to discard the changes and revert the canary release from the production stage.
+
+[start](#content)<br>[apiGatewayHome](#amazon-api-gateway)
 
 ## What is CodeDeploy?
 
@@ -2007,8 +2257,13 @@ If you're using the AWS Lambda or Amazon ECS compute platform, you must indicate
 - Use a dimension on your KPIs to indicate which version is reporting the metrics.
 - Use the metric to measure the success of the deployment; this indicates whether the deployment should continue or roll back.
 - Increase the load on the new version until either all users are on the new version or you have fully rolled back
+
 ![canaryReleaseOne](./img/canaryReleaseOne.png)
-When you are happy with the new version, you can start routing a few selected users to it. There are different strategies to choose which users will see the new version: a simple strategy is to use a random sample; some companies choose to release the new version to their internal users and employees before releasing to the world; another more sophisticated approach is to choose users based on their profile and other demographics. 
+
+
+When you are happy with the new version, you can start routing a few selected users to it. There are different strategies to choose which users will see the new version: a simple strategy is to use a random sample; some companies choose to release the new version to their internal users and employees before releasing to the world; another more sophisticated approach is to choose users based on their profile and other demographics.
+
+
 ![canaryReleaseTwo](./img/canaryReleaseTwo.png)
 ![canaryReleaseThree](./img/canaryReleaseThree.png)
 
