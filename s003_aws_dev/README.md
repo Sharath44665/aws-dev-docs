@@ -1785,7 +1785,9 @@ Create, maintain, and secure APIs at any scale
 [concepts](#amazon-api-gateway-concepts)<br>
 [choosing between REST APIs and HTTP APIs](#choosing-between-rest-apis-and-http-apis)<br>
 [getting started with console](#getting-started-with-the-rest-api-console)<br>
-[setting up stage variables](#setting-up-stage-variables-for-a-rest-api-deployment)
+[setting up stage variables](#setting-up-stage-variables-for-a-rest-api-deployment)<br>
+[api gateway integration types ](#choose-an-api-gateway-api-integration-type)<br>
+[understanding mapping templates](#understanding-mapping-templates)
 
 
 **Amazon API Gateway** is a fully managed service that makes it easy for developers to create, publish, maintain, monitor, and secure APIs at any scale. APIs act as the "front door" for applications to access data, business logic, or functionality from your backend services. Using API Gateway, you can **create RESTful APIs and WebSocket APIs that enable real-time two-way communication applications**. API Gateway supports containerized and serverless workloads, as well as web applications.
@@ -2071,6 +2073,146 @@ To deploy an API with a canary release, you create a canary release deployment b
  After a canary release is enabled, the deployment stage cannot be associated with another non-canary release deployment until the canary release is disabled and the canary settings removed from the stage.
 
 When you enable API execution logging, the canary release has its own logs and metrics generated for all canary requests. They are reported to a production stage CloudWatch Logs log group as well as a canary-specific CloudWatch Logs log group. The same applies to access logging. The separate canary-specific logs are helpful to validate new API changes and decide whether to accept the changes and promote the canary release to the production stage, or to discard the changes and revert the canary release from the production stage.
+
+## Choose an API Gateway API integration type
+
+You choose an API integration type according to the types of integration endpoint you work with and how you want data to pass to and from the integration endpoint. For a Lambda function, you can have the Lambda proxy integration, or the Lambda custom integration. For an HTTP endpoint, you can have the HTTP proxy integration or the HTTP custom integration. For an AWS service action, you have the AWS integration of the non-proxy type only. API Gateway also supports the mock integration, where API Gateway serves as an integration endpoint to respond to a method request.
+
+The following list summarizes the supported integration types:
+
+- `AWS`: This type of integration lets an API expose AWS service actions. In `AWS` integration, you must configure both the integration request and integration response and set up necessary data mappings from the method request to the integration request, and from the integration response to the method response.
+
+- `AWS_PROXY`: This type of integration lets an API method be integrated with the Lambda function invocation action with a flexible, versatile, and streamlined integration setup. This integration relies on direct interactions between the client and the integrated Lambda function.
+
+   With this type of integration, also known as the **Lambda proxy integration**, you do not set the integration request or the integration response. API [Gateway passes the incoming request](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-input-format) from the client as the input to the backend Lambda function. The integrated Lambda function takes the input of this format and parses the input from all available sources, including request headers, URL path variables, query string parameters, and applicable body. The function returns the result following this [output format](https://docs.aws.amazon.com/apigateway/latest/developerguide/set-up-lambda-proxy-integrations.html#api-gateway-simple-proxy-for-lambda-output-format).
+
+   This is the preferred integration type to call a Lambda function through API Gateway and is not applicable to any other AWS service actions, including Lambda actions other than the function-invoking action.
+
+- `HTTP`: This type of integration lets an API expose HTTP endpoints in the backend. With the `HTTP` integration, also known as the HTTP custom integration, you must configure both the integration request and integration response. You must set up necessary data mappings from the method request to the integration request, and from the integration response to the method response.
+
+- `HTTP_PROXY`: The HTTP proxy integration allows a client to access the backend HTTP endpoints with a streamlined integration setup on single API method. You do not set the integration request or the integration response. **API Gateway passes the incoming request from the client to the HTTP endpoint and passes the outgoing response from the HTTP endpoint to the client.**
+
+- `MOCK`: This type of integration lets API Gateway return a response <ins>without sending the request further to the backend.</ins> This is useful for API testing because it can be used to test the integration set up <ins>without incurring charges for using the backend</ins> and to enable collaborative development of an API.
+
+   In collaborative development, a team can isolate their development effort by setting up simulations of API components owned by other teams by using the `MOCK` integrations. It is also used to return CORS-related headers to ensure that the API method permits CORS access. In fact, the API Gateway console integrates the `OPTIONS` method to support CORS with a mock integration. [Gateway responses](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-gatewayResponse-definition.html#customize-gateway-responses) are other examples of mock integrations.
+
+
+## Understanding mapping templates
+ In API Gateway, an API's method request or response can take a payload in a different format from the integration request or response.
+
+You can transform your data to:
+
+- Match the payload to an API-specified format.
+
+- Override an API's request and response parameters and status codes.
+
+- Return client selected response headers.
+
+- Associate path parameters, query string parameters, or header parameters in the method request of HTTP proxy or AWS service proxy.
+
+- Select which data to send using integration with AWS services, such as Amazon DynamoDB or Lambda functions, or HTTP endpoints. 
+
+The following example shows input data, a mapping template, and output data for a transformation of the [PetStore data.](http://petstore-demo-endpoint.execute-api.com/petstore/pets) 
+
+<table>
+<tr>
+   <td> 
+   
+   **Input data** </td>
+   <td>
+
+``` json
+[
+  {
+    "id": 1,
+    "type": "dog",
+    "price": 249.99
+  },
+  {
+    "id": 2,
+    "type": "cat",
+    "price": 124.99
+  },
+  {
+    "id": 3,
+    "type": "fish",
+    "price": 0.99
+  }
+]
+
+```
+
+   </td>
+</tr>
+
+<tr>
+   <td> 
+   
+   **Mapping template** 
+   
+   </td>
+   <td>
+   
+``` python
+#set($inputRoot = $input.path('$'))
+[
+#foreach($elem in $inputRoot)
+  {
+    "description" : "Item $elem.id is a $elem.type.",
+    "askingPrice" : $elem.price
+  }#if($foreach.hasNext),#end
+
+#end
+]
+
+```
+
+   </td>
+
+</tr>
+
+<tr>
+   <td> 
+   
+   **Output data** 
+   
+   </td>
+   <td>
+
+``` json
+[
+  {
+    "description" : "Item 1 is a dog.",
+    "askingPrice" : 249.99
+  },
+  {
+    "description" : "Item 2 is a cat.",
+    "askingPrice" : 124.99
+  },
+  {
+    "description" : "Item 3 is a fish.",
+    "askingPrice" : 0.99
+  }
+]
+```
+
+   </td>
+
+</tr>
+</table>
+
+The following diagram shows details of this mapping template.
+![mappingTemplate](./img/map-03-17MappingTemplates.png)
+
+1. The `$inputRoot` variable represents the root object in the original JSON data from the previous section. Directives begin with the `#` symbol.
+
+2. A `foreach` loop iterates though each object in the original JSON data.
+
+3. The description is a concatenation of the Pet's `id` and `type` from the original JSON data.
+
+4. `askingPrice` is the `price` is the price from the original JSON data.
+
+
 
 [start](#content)<br>[apiGatewayHome](#amazon-api-gateway)
 
