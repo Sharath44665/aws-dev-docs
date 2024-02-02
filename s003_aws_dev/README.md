@@ -5,6 +5,7 @@
 [**Lamba**](#aws-lambda)<br>
 [**api gateway**](#amazon-api-gateway)<br>
 [**codeDeploy**](#what-is-codedeploy)<br>
+
 # AWS Integration & Messaging
 
 ## Amazon Simple Queue Service
@@ -1787,7 +1788,12 @@ Create, maintain, and secure APIs at any scale
 [getting started with console](#getting-started-with-the-rest-api-console)<br>
 [setting up stage variables](#setting-up-stage-variables-for-a-rest-api-deployment)<br>
 [api gateway integration types ](#choose-an-api-gateway-api-integration-type)<br>
-[understanding mapping templates](#understanding-mapping-templates)
+[understanding mapping templates](#understanding-mapping-templates)<br>
+[apiGateway and OpenAPI](#configuring-a-rest-api-using-openapi)<br>
+[Request Validation in API](#use-request-validation-in-api-gateway)<br>
+[understanding data models](#understanding-data-models)<br>
+[OpenAPI definitions of a sample API with basic request validation](#openapi-definitions-of-a-sample-api-with-basic-request-validation)<br>
+[API Caching](#enabling-api-caching-to-enhance-responsiveness)
 
 
 **Amazon API Gateway** is a fully managed service that makes it easy for developers to create, publish, maintain, monitor, and secure APIs at any scale. APIs act as the "front door" for applications to access data, business logic, or functionality from your backend services. Using API Gateway, you can **create RESTful APIs and WebSocket APIs that enable real-time two-way communication applications**. API Gateway supports containerized and serverless workloads, as well as web applications.
@@ -2007,9 +2013,11 @@ HTTP API pics:
 ![step3](./img/API%20Gateway%20-%20Create%20HTTP%20API%20Step%203.png)
 
 InvokeAPI
+
 ![invokeAPI](./img/gettingStartedInvokeUrl333fsjkafj.png)
 
 OUTPUT:
+
 ![output](./img/LastScreenshot_20240129_202357.png)
 
 ### Setting up stage variables for a REST API deployment
@@ -2043,7 +2051,7 @@ You can reference stage variables in a similar way to specify a Lambda function 
 
 When specifying a Lambda function name as a stage variable value, you must configure the permissions on the Lambda function manually. When you specify a Lambda function in the API Gateway console, a AWS CLI command will pop-up to configure the proper permissions. You can also use the AWS Command Line Interface (AWS CLI) to do this.
 
-``` bash
+``` shell
 aws lambda add-permission --function-name "arn:aws:lambda:us-east-2:123456789012:function:my-function" --source-arn "arn:aws:execute-api:us-east-2:123456789012:api_id/*/HTTP_METHOD/resource" --principal apigateway.amazonaws.com --statement-id apigateway-access --action lambda:InvokeFunction
 ```
 
@@ -2202,7 +2210,8 @@ The following example shows input data, a mapping template, and output data for 
 </table>
 
 The following diagram shows details of this mapping template.
-![mappingTemplate](./img/map-03-17MappingTemplates.png)
+
+![mappingTemplate](./img/map-03-17MappingTemplates.jpg)
 
 1. The `$inputRoot` variable represents the root object in the original JSON data from the previous section. Directives begin with the `#` symbol.
 
@@ -2212,6 +2221,310 @@ The following diagram shows details of this mapping template.
 
 4. `askingPrice` is the `price` is the price from the original JSON data.
 
+## Configuring a REST API using OpenAPI
+You can use API Gateway to import a REST API from an external definition file into API Gateway. Currently, API Gateway supports OpenAPI v2.0 and OpenAPI v3.0 definition files, with exceptions listed in [Amazon API Gateway important notes for REST APIs](https://docs.aws.amazon.com/apigateway/latest/developerguide/api-gateway-known-issues.html#api-gateway-known-issues-rest-apis). You can update an API by overwriting it with a new definition, or you can merge a definition with an existing API. You specify the options by using a mode query parameter in the request URL. 
+
+## Use request validation in API Gateway
+You can configure API Gateway to perform basic validation of an API request before proceeding with the integration request. When the validation fails, API Gateway immediately fails the request, returns a 400 error response to the caller, and publishes the validation results in CloudWatch Logs. This reduces unnecessary calls to the backend. More importantly, it lets you focus on the validation efforts specific to your application. You can validate a request body by verifying that required request parameters are valid and non-null or by specifying a model schema for more complicated data validation
+
+## Understanding data models
+``` json
+{
+    "id": 1,
+    "type": "dog",
+    "price": 249.99
+}
+```
+
+The data contains the `id`, `type`, and `price` of the pet. A model of this data allows you to:
+
+- Use basic request validation.
+
+- Create mapping templates for data transformation.
+
+- Create a user-defined data type (UDT) when you generate an SDK
+
+![model](./img/model-03-17.jpg)
+
+In this model:
+
+1. The `$schema` object represents a valid JSON Schema version identifier. This schema is the JSON Schema draft v4.
+
+2. The `title` object is a human-readable identifier for the model. This title is `PetStoreModel`.
+
+3. The `required` <ins>validation</ins> keyword requires `type`, and `price` for basic request validation.
+
+4. The `properties` of the model are `id`, `type`, and `price`. Each object has properties that are described in the model.
+
+5. The object `type` can have only the values `dog`, `cat`, or `fish`.
+
+6. The object `price` is a number and is constrained with a `minimum` of 25 and a `maximum` of 500.
+
+## OpenAPI definitions of a sample API with basic request validation
+
+The following OpenAPI definition defines a sample API with request validation enabled. The API is a subset of the [PetStore API](http://petstore-demo-endpoint.execute-api.com/petstore/pets). It exposes a POST method to add a pet to the pets collection and a GET method to query pets by a specified type.
+
+There are two request validators declared in the `x-amazon-apigateway-request-validators` map at the API level. The `params-only` validator is enabled on the API and inherited by the `GET` method. This validator allows API Gateway to verify that the required query parameter (`q1`) is included and not blank in the incoming request. The `all` validator is enabled on the `POST` method. This validator verifies that the required header parameter (`h1`) is set and not blank. It also verifies that the payload format adheres to the specified `RequestBodyModel` If there is no matching content type is found, request validation is not performed. When using a model to validate the body, if no matching content type is found, request validation is not performed. To use the same model regardless of the content type, specify `$default` as the key.
+
+This model requires that the input JSON object contains the `name`, `type`, and `price` properties. The `name` property can be any string, `type` must be one of the specified enumeration fields (`["dog", "cat", "fish"]`), and `price` must range between 25 and 500. The `id` parameter is not required. 
+
+**OpenAPI 2.0**
+``` json
+{
+  "swagger": "2.0",
+  "info": {
+    "title": "ReqValidators Sample",
+    "version": "1.0.0"
+  },
+  "schemes": [
+    "https"
+  ],
+  "basePath": "/v1",
+  "produces": [
+    "application/json"
+  ],
+  "x-amazon-apigateway-request-validators" : {
+    "all" : {
+      "validateRequestBody" : true,
+      "validateRequestParameters" : true
+    },
+    "params-only" : {
+      "validateRequestBody" : false,
+      "validateRequestParameters" : true
+    }
+  },
+  "x-amazon-apigateway-request-validator" : "params-only",
+  "paths": {
+    "/validation": {
+      "post": {
+        "x-amazon-apigateway-request-validator" : "all",
+        "parameters": [
+          {
+            "in": "header",
+            "name": "h1",
+            "required": true
+          },
+          {
+            "in": "body",
+            "name": "RequestBodyModel",
+            "required": true,
+            "schema": {
+              "$ref": "#/definitions/RequestBodyModel"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Error"
+              }
+            },
+            "headers" : {
+              "test-method-response-header" : {
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "security" : [{
+          "api_key" : []
+        }],
+        "x-amazon-apigateway-auth" : {
+          "type" : "none"
+        },
+        "x-amazon-apigateway-integration" : {
+          "type" : "http",
+          "uri" : "http://petstore-demo-endpoint.execute-api.com/petstore/pets",
+          "httpMethod" : "POST",
+          "requestParameters": {
+            "integration.request.header.custom_h1": "method.request.header.h1"
+          },
+          "responses" : {
+            "2\\d{2}" : {
+              "statusCode" : "200"
+            },
+            "default" : {
+              "statusCode" : "400",
+              "responseParameters" : {
+                "method.response.header.test-method-response-header" : "'static value'"
+              },
+              "responseTemplates" : {
+                "application/json" : "json 400 response template",
+                "application/xml" : "xml 400 response template"
+              }
+            }
+          }
+        }
+      },
+      "get": {
+        "parameters": [
+          {
+            "name": "q1",
+            "in": "query",
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "schema": {
+              "type": "array",
+              "items": {
+                "$ref": "#/definitions/Error"
+              }
+            },
+            "headers" : {
+              "test-method-response-header" : {
+                "type" : "string"
+              }
+            }
+          }
+        },
+        "security" : [{
+          "api_key" : []
+        }],
+        "x-amazon-apigateway-auth" : {
+          "type" : "none"
+        },
+        "x-amazon-apigateway-integration" : {
+          "type" : "http",
+          "uri" : "http://petstore-demo-endpoint.execute-api.com/petstore/pets",
+          "httpMethod" : "GET",
+          "requestParameters": {
+            "integration.request.querystring.type": "method.request.querystring.q1"
+          },
+          "responses" : {
+            "2\\d{2}" : {
+              "statusCode" : "200"
+            },
+            "default" : {
+              "statusCode" : "400",
+              "responseParameters" : {
+                "method.response.header.test-method-response-header" : "'static value'"
+              },
+              "responseTemplates" : {
+                "application/json" : "json 400 response template",
+                "application/xml" : "xml 400 response template"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "definitions": {
+    "RequestBodyModel": {
+      "type": "object",
+      "properties": {
+        "id":    { "type": "integer" },
+        "type":  { "type": "string", "enum": ["dog", "cat", "fish"] },
+        "name":  { "type": "string" },
+        "price": { "type": "number", "minimum": 25, "maximum": 500 }
+      },
+      "required": ["type", "name", "price"]
+    },
+    "Error": {
+      "type": "object",
+      "properties": {
+
+      }
+    }
+  }
+}
+```
+
+## Enabling API caching to enhance responsiveness
+You can enable API caching in Amazon API Gateway to cache your endpoint's responses. With caching, <ins>you can reduce the number of calls made to your endpoint and also improve the latency of requests </ins>to your API.
+
+When you enable caching for a stage, API Gateway caches responses from your endpoint for a specified **time-to-live** (TTL) period, in seconds. API Gateway then responds to the request by looking up the endpoint response from the **cache** instead of making a request to your endpoint. The default TTL value for API caching is 300 seconds. The maximum TTL value is 3600 seconds. TTL=0 means caching is disabled.
+
+>Note
+>
+>Caching is best-effort. You can use the `CacheHitCount` and `CacheMissCount` metrics in Amazon CloudWatch to monitor requests that API Gateway serves from the API cache.
+
+> ! Important
+>
+>When you enable caching for a stage, only GET methods have caching enabled by default. This helps to ensure the safety and availability of your API. You can enable caching for other methods by overriding method settings.
+>
+> NOT FREE for FREE tier
+
+### Enable Amazon API Gateway caching
+
+In API Gateway, you can enable caching for a specified stage.
+
+When you enable caching, you must choose a cache capacity. In general, a larger capacity gives a better performance, but also costs more. For supported cache sizes, see [cacheClusterSize](https://docs.aws.amazon.com/apigateway/latest/api/API_CreateStage.html#apigw-CreateStage-request-cacheClusterSize) in the API Gateway API Reference.
+
+API Gateway enables caching by creating a dedicated cache instance. This process can take up to 4 minutes.
+
+API Gateway changes caching capacity by <ins>removing the existing cache instance and creating a new one </ins>with a modified capacity. All existing cached data is deleted. 
+
+> Note
+>
+>The cache capacity affects the CPU, memory, and network bandwidth of the cache instance. As a result, the cache capacity can affect the performance of your cache.
+>
+>API Gateway recommends that you run a 10-minute load test to verify that your cache capacity is appropriate for your workload. Ensure that traffic during the load test mirrors production traffic. For example, include ramp up, constant traffic, and traffic spikes. The load test should include responses that can be served from the cache, as well as unique responses that add items to the cache. Monitor the latency, 4xx, 5xx, cache hit, and cache miss metrics during the load test
+
+![apiCaching](./img/api-caching-including-parameter-as-cache-key-new-console.png)
+
+### Invalidate an API Gateway cache entry
+
+A client of your API can invalidate an existing cache entry and reload it from the integration endpoint for individual requests. The client must send a request that contains the Cache-Control: `max-age=0` header. The client receives the response directly from the integration endpoint instead of the cache, provided that the client is authorized to do so. This replaces the existing cache entry with the new response, which is fetched from the integration endpoint.
+
+To grant permission for a client, attach a policy of the following format to an IAM execution role for the user.
+
+> Note
+>
+>Cross-account cache invalidation is not supported.
+
+``` json
+
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": [
+        "execute-api:InvalidateCache"
+      ],
+      "Resource": [
+        "arn:aws:execute-api:region:account-id:api-id/stage-name/GET/resource-path-specifier"
+      ]
+    }
+  ]
+}            
+        
+```
+
+This policy allows the API Gateway execution service to invalidate the cache for requests on the specified resource (or resources). To specify a group of targeted resources, use a wildcard (*) character for `account-id`, `api-id`, and other entries in the ARN value of `Resource`. For more information on how to set permissions for the API Gateway execution service, see Control access to an API with IAM permissions.
+
+If you don't impose an `InvalidateCache` policy (or choose the Require authorization check box in the console), any client can invalidate the API cache. If most or all of the clients invalidate the API cache, this could significantly increase the latency of your API.
+
+When the policy is in place, caching is enabled and authorization is required.
+
+You can control how unauthorized requests are handled by choosing an option from Handle unauthorized requests in the API Gateway console.
+
+![apiCachingInvalidate](./img/apig-cache-invalidation-new-console.png)
+
+The three options result in the following behaviors:
+
+- **Fail the request with 403 status code**: returns a 403 Unauthorized response.
+
+   To set this option using the API, use `FAIL_WITH_403`.
+
+- **Ignore cache control header; Add a warning in response header:** process the request and add a warning header in the response.
+
+   To set this option using the API, use `SUCCEED_WITH_RESPONSE_HEADER`.
+
+- **Ignore cache control header:** process the request and do not add a warning header in the response.
+
+   To set this option using the API, use `SUCCEED_WITHOUT_RESPONSE_HEADER`.
+
+> ! **Important**
+>
+>- Don't use API keys for authentication or authorization to control access to your APIs. If you have multiple APIs in a usage plan, a user with a valid API key for one API in that usage plan can access all APIs in that usage plan. Instead, to control access to your API, use an IAM role, a Lambda authorizer, or an Amazon Cognito user pool.
+>
+>- Use API keys that API Gateway generates. API keys shouldn't include confidential information; clients typically transmit them in headers that can be logged.
 
 
 [start](#content)<br>[apiGatewayHome](#amazon-api-gateway)
