@@ -19,7 +19,7 @@ The following are key features of Amazon EKS:
 ### Integration with AWS services
 > Amazon EKS integrates with other AWS services, providing a comprehensive platform for `deploying and managing your containerized applications`. You can also more easily **troubleshoot your Kubernetes workloads with various observability tools**.
 
-![Alt text](image.png)
+![Alt text](./imgOne/image.png)
 
 ## Common use cases in Amazon EKS
 - **Deploying high-availability applications:**
@@ -62,7 +62,7 @@ A Kubernetes node is a machine that runs containerized applications. Each node h
 
     Maintains network rules that allow communication to your Pods.
 
-    ![Alt text](image-1.png)
+    ![Alt text](./imgOne/image-1.png)
     ## Managed node groups
     Amazon EKS managed node groups automate the provisioning and lifecycle management of nodes (Amazon EC2 instances) for Amazon EKS Kubernetes clusters.
 
@@ -104,14 +104,14 @@ A Kubernetes node is a machine that runs containerized applications. Each node h
 
 # AWS Elastic Beanstalk
 Deploy and scale web applications
-![Alt text](image-2.png)
+![Alt text](./imgOne/image-2.png)
 AWS Elastic Beanstalk deploys web applications so that you can focus on your business.
-![Alt text](image-3.png)
-![Alt text](image-4.png)
+![Alt text](./imgOne/image-3.png)
+![Alt text](./imgOne/image-4.png)
 
 To use Elastic Beanstalk, you create an application, upload an application version in the form of an **application source bundle** (for example, a Java .war file) to Elastic Beanstalk, and then provide some information about the application. Elastic Beanstalk automatically launches an environment and creates and configures the AWS resources needed to run your code. After your environment is launched, you can then manage your environment and deploy new `application versions`. The following diagram illustrates the workflow of Elastic Beanstalk.
 
-![Alt text](clearbox-flow-00.png)
+![Alt text](./imgOne/clearbox-flow-00.png)
 
 After you create and deploy your application, information about the application—including metrics, events, and environment status—is available through the Elastic Beanstalk console, APIs, or Command Line Interfaces, including the unified AWS CLI
 
@@ -146,7 +146,7 @@ A platform is a combination of an operating system, programming language runtime
 ## Web server environments
 The following diagram shows an example Elastic Beanstalk architecture for a web server environment tier, and shows how the components in that type of environment tier work together.
 
-![webserver](webServere_aeb-architecture2.png)
+![webserver](./imgOne/webServere_aeb-architecture2.png)
 The environment is the heart of the application. In the diagram, the environment is shown within the top-level solid line. When you create an environment, Elastic Beanstalk provisions the resources required to run your application. AWS resources created for an environment include one elastic load balancer (ELB in the diagram), an Auto Scaling group, and one or more Amazon Elastic Compute Cloud (Amazon EC2) instances.
 
 Every environment has a CNAME (URL) that points to a load balancer. The environment has a URL, such as `myapp.us-west-2.elasticbeanstalk.com.` This URL is aliased in **Amazon Route 53** to an Elastic Load Balancing URL—something like `abcdef-123456.us-west-2.elb.amazonaws.com`—by using a CNAME record. Amazon Route 53 is a highly available and scalable Domain Name System (DNS) web service. It provides secure and reliable routing to your infrastructure. Your domain name that you registered with your DNS provider will forward requests to the CNAME.
@@ -162,7 +162,7 @@ AWS resources created for a worker environment tier include an Auto Scaling grou
 
 The following diagram shows the different components and their interactions across environments and AWS services.
 
-![workerEnv](aeb-architecture_worker_env.png)
+![workerEnv](./imgOne/aeb-architecture_worker_env.png)
 
 ## Deploying applications to Elastic Beanstalk environments
 
@@ -241,7 +241,7 @@ You can avoid hitting the quota by applying an application version lifecycle pol
 
 Elastic Beanstalk applies an application's lifecycle policy each time you create a new application version, and deletes up to 100 versions each time the lifecycle policy is applied. Elastic Beanstalk deletes old versions after creating the new version, and does not count the new version towards the maximum number of versions defined in the policy.
 
-![app-version](app-version-lifecycle.png)
+![app-version](./imgOne/app-version-lifecycle.png)
 
 Elastic Beanstalk does not delete application versions that are currently being used by an environment, or application versions deployed to environments that were terminated less than ten weeks before the policy was triggered.
 
