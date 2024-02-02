@@ -2,7 +2,7 @@
 Speed up cloud provisioning with `infrastructure as code`
 
 AWS CloudFormation lets you model, provision, and manage AWS and third-party resources by treating infrastructure as code. 
-![cloudFormation](image-5.png)
+![cloudFormation](./imgTwo/image-5.png)
 
 ## Use Cases
 
@@ -87,7 +87,7 @@ When creating a stack, AWS CloudFormation makes underlying service calls to AWS 
 
 The calls that CloudFormation makes are all declared by your template. For example, suppose you have a template that describes an EC2 instance with a `t2.micro` instance type. When you use that template to create a stack, CloudFormation calls the Amazon EC2 create instance API and specifies the instance type as `t2.micro`. The following diagram summarizes the CloudFormation workflow for creating stacks.
 
-![createStackImg](create-stack-diagram.png)
+![createStackImg](./imgTwo/create-stack-diagram.png)
 
 1. Use the `AWS CloudFormation Designer` or your own text editor to create or modify a CloudFormation template in JSON or YAML format. You can also choose to use a provided template. The CloudFormation template describes the resources you want and their settings. For example, suppose you want to create an EC2 instance. Your template can declare an Amazon EC2 instance and describe its properties, as shown in the following example:
 
@@ -125,7 +125,7 @@ After all the resources have been created, CloudFormation reports that your stac
 
 When you need to update your stack's resources, you can modify the stack's template. You don't need to create a new stack and delete the old one. To update a stack, create a change set by submitting a modified version of the original stack template, different input parameter values, or both. CloudFormation compares the modified template with the original template and generates a change set. The change set lists the proposed changes. After reviewing the changes, you can start the change set to update your stack or you can create a new change set. The following diagram summarizes the workflow for updating a stack.
 
-![updateStackDiagram](update-stack-diagram.png)
+![updateStackDiagram](./imgTwo/update-stack-diagram.png)
 
 >💥 Important
 >
@@ -582,7 +582,7 @@ Nested stacks can themselves contain other nested stacks, resulting in a hierarc
 
 - For stack D, stack C is the parent stack; while for stack C, stack B is the parent stack.
 
-![nestedStackImg](cfn-console-nested-stacks.png)
+![nestedStackImg](./imgTwo/cfn-console-nested-stacks.png)
 
 ## CloudFormation – Cross vs Nested Stacks
 
@@ -590,7 +590,7 @@ Nested stacks can themselves contain other nested stacks, resulting in a hierarc
 - Helpful when stacks have different lifecycles
 - Use Outputs Export and Fn::ImportValue
 - When you need to pass export values to many stacks (VPC Id, etc...)
-![crossStackImg](crossStack.png)
+![crossStackImg](./imgTwo/crossStack.png)
 
 ### Nested Stacks
 - Helpful when components must be re-used
@@ -601,7 +601,7 @@ Nested stacks can themselves contain other nested stacks, resulting in a hierarc
 ## Working with AWS CloudFormation StackSets
 AWS CloudFormation StackSets extends the capability of stacks by enabling you to create, update, or delete stacks across multiple accounts and AWS Regions with a single operation. Using an administrator account, you define and manage an AWS CloudFormation template, and use the template as the basis for provisioning stacks into selected target accounts across specified AWS Regions.
 
-![stack_set_conceptual_sv.png](stack_set_conceptual_sv.png)
+![stack_set_conceptual_sv.png](./imgTwo/stack_set_conceptual_sv.png)
 
 ### What is drift?
 
@@ -611,11 +611,11 @@ To determine whether a resource has drifted, CloudFormation determines the expec
 
 CloudFormation generates detailed information on each resource in the stack that has drifted.
 
-![console-stacks-actions-detect-drift-1.png](console-stacks-actions-detect-drift-1.png)
+![console-stacks-actions-detect-drift-1.png](./imgTwo/console-stacks-actions-detect-drift-1.png)
 ---
-![console-stacks-drifts-overview-1.png](console-stacks-drifts-overview-1.png)
+![console-stacks-drifts-overview-1.png](./imgTwo/console-stacks-drifts-overview-1.png)
 ---
-![console-stacks-drifts-drift-details-differences-1.png](console-stacks-drifts-drift-details-differences-1.png)
+![console-stacks-drifts-drift-details-differences-1.png](./imgTwo/console-stacks-drifts-drift-details-differences-1.png)
 ---
 
 ## CloudFormation stack policies
