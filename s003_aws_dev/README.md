@@ -1793,8 +1793,11 @@ Create, maintain, and secure APIs at any scale
 [Request Validation in API](#use-request-validation-in-api-gateway)<br>
 [understanding data models](#understanding-data-models)<br>
 [OpenAPI definitions of a sample API with basic request validation](#openapi-definitions-of-a-sample-api-with-basic-request-validation)<br>
-[API Caching](#enabling-api-caching-to-enhance-responsiveness)
-
+[API Caching](#enabling-api-caching-to-enhance-responsiveness)<br>
+[api gateway metrics](#api-gateway-metrics)<br>
+[throttling](#throttling-requests-to-your-http-api)<br>
+[api gateway CORS](#enabling-cors-for-a-rest-api-resource)<br>
+[resource policies](#example-allow-roles-in-another-aws-account-to-use-an-api)
 
 **Amazon API Gateway** is a fully managed service that makes it easy for developers to create, publish, maintain, monitor, and secure APIs at any scale. APIs act as the "front door" for applications to access data, business logic, or functionality from your backend services. Using API Gateway, you can **create RESTful APIs and WebSocket APIs that enable real-time two-way communication applications**. API Gateway supports containerized and serverless workloads, as well as web applications.
 
@@ -2526,8 +2529,139 @@ The three options result in the following behaviors:
 >
 >- Use API keys that API Gateway generates. API keys shouldn't include confidential information; clients typically transmit them in headers that can be logged.
 
+### API GateWay Metrics
+
+![apiGatewayMetrics](./img/apiGatewayMetricsImg3434.png)
+
+## Throttling requests to your HTTP API
+
+You can configure throttling for your APIs to help protect them from being overwhelmed by too many requests. Throttles are applied on a best-effort basis and should be thought of as targets rather than guaranteed request ceilings.
+
+API Gateway throttles requests to your API using the token bucket algorithm, where a token counts for a request. Specifically, API Gateway examines the rate and a burst of request submissions against all APIs in your account, per Region. In the token bucket algorithm, a burst can allow pre-defined overrun of those limits, but other factors can also cause limits to be overrun in some cases.
+
+When request submissions exceed the steady-state request rate and burst limits, API Gateway begins to throttle requests. Clients may receive `429 Too Many Requests` error responses at this point. Upon catching such exceptions, the client can resubmit the failed requests in a way that is rate limiting.
+
+### Account-level throttling per Region
+
+By default, API Gateway limits the steady-state requests per second (RPS) across all APIs within an AWS account, per Region. It also limits the burst (that is, the maximum bucket size) across all APIs within an AWS account, per Region. In API Gateway, the burst limit represents the target maximum number of concurrent request submissions that API Gateway will fulfill before returning `429 Too Many Requests` error responses.
+
+### Route-level throttling
+
+You can set route-level throttling to override the account-level request throttling limits for a specific stage or for individual routes in your API. The default route throttling limits can't exceed account-level rate limits.
+
+You can configure route-level throttling by using the AWS CLI. The following command configures custom throttling for the specified stage and route of an API.
+
+``` shell
+aws apigatewayv2 update-stage \
+    --api-id a1b2c3d4 \
+    --stage-name dev \
+    --route-settings '{"GET /pets":{"ThrottlingBurstLimit":100,"ThrottlingRateLimit":2000}}'
+   
+```
+
+## Enabling CORS for a REST API resource
+
+![corsPrinciple](./img/cors_principle.png)
+
+### Determining whether to enable CORS support
+
+A *cross-origin* HTTP request is one that is made to:
+
+- A different domain (for example, from `example.com` to `amazondomains.com`)
+
+- A different subdomain (for example, from e`xample.com` to `petstore.example.com`)
+
+- A different port (for example, from `example.com` to `example.com:10777`)
+
+- A different protocol (for example, from `https://example.com` to `http://example.com`)
+
+If you cannot access your API and receive an error message that contains `Cross-Origin Request Blocked`, you might need to enable CORS.
+
+Cross-origin HTTP requests can be divided into two types: simple requests and non-simple requests.
+
+
+### Enabling CORS for a simple request
+
+An HTTP request is simple if all of the following conditions are true:
+
+- It is issued against an API resource that allows only `GET`, `HEAD`, and `POST` requests.
+
+- If it is a `POST` method request, it must include an `Origin` header.
+
+- The request payload content type is `text/plain`, `multipart/form-data`, or `application/x-www-form-urlencoded`.
+
+- The request does not contain custom headers.
+
+- Any additional requirements that are listed in the [Mozilla CORS documentation for simple requests](https://developer.mozilla.org/en-US/docs/Web/HTTP/CORS#simple_requests)
+
+For simple cross-origin `POST` method requests, the response from your resource needs to include the header `Access-Control-Allow-Origin: '*'` or `Access-Control-Allow-Origin:'origin'`.
+
+### Enabling CORS support for proxy integrations
+to remember: 
+
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;your backend is responsible for returning the `Access-Control-Allow-Origin`, `Access-Control-Allow-Methods`, and `Access-Control-Allow-Headers` 
+
+
+``` python
+import json
+
+def lambda_handler(event, context):
+    return {
+        'statusCode': 200,
+        'headers': {
+            'Access-Control-Allow-Headers': 'Content-Type',
+            'Access-Control-Allow-Origin': 'https://www.example.com',
+            'Access-Control-Allow-Methods': 'OPTIONS,POST,GET'
+        },
+        'body': json.dumps('Hello from Lambda!')
+    }
+```
+![enableCORSconsole](./img/amazon-api-gateway-new-console-enable-cors.png)
+
+![enableCORSresources](./img/amazon-api-gateway-new-console-enable-cors-resources.png)
+
+
+###  Example: Allow roles in another AWS account to use an API
+
+The following example resource policy grants API access in one AWS account to two roles in a different AWS account via Signature Version 4 (SigV4) protocols. Specifically, the developer and the administrator role for the AWS account identified by account-id-2 are granted the execute-api:Invoke action to execute the GET action on the pets resource (API) in your AWS account.
+
+``` json
+{
+   "Version": "2012-10-17",
+   "Statement": [
+        {
+            "Effect": "Allow",
+            "Principal": {
+                "AWS": [
+                    "arn:aws:iam::account-id-2:role/developer",
+                    "arn:aws:iam::account-id-2:role/Admin"
+                ]
+            },
+            "Action": "execute-api:Invoke",
+            "Resource": [
+                "execute-api:/stage/GET/pets"
+            ]
+        }
+    ]
+}
+```
+
+[see more example like this](https://docs.aws.amazon.com/apigateway/latest/developerguide/apigateway-resource-policies-examples.html)
+
+## Control access to a REST API using Amazon Cognito user pools as authorizer
+
+As an alternative to using IAM roles and policies or Lambda authorizers (formerly known as custom authorizers), you can use an Amazon Cognito user pool to control who can access your API in Amazon API Gateway.
+
+![cognitoAccessAPIgateway](./img/cognitoAWSgatewayAccess.png)
+
+To use an Amazon Cognito user pool with your API, you must first create an authorizer of the `COGNITO_USER_POOLS` type and then configure an API method to use that authorizer. After the API is deployed, the client must first sign the user in to the user pool, obtain an identity or access token for the user, and then call the API method with one of the tokens, which are typically set to the request's `Authorization` header. The API call succeeds only if the required token is supplied and the supplied token is valid, otherwise, the client isn't authorized to make the call because the client did not have credentials that could be authorized.
+
+The identity token is used to authorize API calls based on identity claims of the signed-in user. The access token is used to authorize API calls based on the custom scopes of specified access-protected resources. For more information, see Using Tokens with User Pools and Resource Server and Custom Scopes.
+![cognitoUserPoolWithAPIgateway](./img/cognito-user-pool-custom-scopes-new-console.png)
 
 [start](#content)<br>[apiGatewayHome](#amazon-api-gateway)
+
+
 
 ## What is CodeDeploy?
 
