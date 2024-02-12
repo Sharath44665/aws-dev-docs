@@ -5,7 +5,7 @@
 [**Lamba**](#aws-lambda)<br>
 [**api gateway**](#amazon-api-gateway)<br>
 [**codeDeploy**](#what-is-codedeploy)<br>
-
+[what is CICD and continuous deployment](#what-is-continuous-integration-continuous-delivery-and-continuous-deployment)<br>
 # AWS Integration & Messaging
 
 ## Amazon Simple Queue Service
@@ -2660,6 +2660,73 @@ The identity token is used to authorize API calls based on identity claims of th
 ![cognitoUserPoolWithAPIgateway](./img/cognito-user-pool-custom-scopes-new-console.png)
 
 [start](#content)<br>[apiGatewayHome](#amazon-api-gateway)
+
+## What is Continuous Integration, Continuous Delivery, and Continuous Deployment?
+differences between Continuous Integration (CI), Continuous Delivery (CD), and Continuous Deployment (CD)
+### 1. Continuous Integration (CI):
+
+- **Purpose:** CI is a fundamental DevOps practice where developers frequently merge code changes into a central repository.
+    
+- **Process**:
+  - Developers merge their changes back to the main branch as often as possible.
+
+  - Automated builds and tests run to validate the changes.
+  
+  - Emphasis on testing automation to ensure the application remains functional.
+
+- **Benefits**:
+    - Avoids integration challenges during release.
+
+    - Ensures codebase stability.
+    
+    - Example: Whenever new commits are integrated into the main branch, automated tests validate the application.
+
+### 2. Continuous Delivery (CD):
+
+- **Purpose:** An extension of CI, CD automatically <ins>deploys all code changes to a testing or production environment after the build stage.</ins>
+
+- **Process**:
+  
+  - Automated release process alongside automated testing.
+
+  - Application can be deployed anytime by clicking a button.
+
+  - Releases can occur daily, weekly, or as needed.
+
+- **Benefits:**
+
+    - Streamlines product release.
+
+    - Troubleshoots small batches in case of issues.
+    
+- **Example**: You can deploy your application to testing or production environments with ease.
+
+### 3. Continuous Deployment (CD):
+- **Purpose:** Takes CD one step further by automatically releasing changes to customers.
+
+- **Process:**
+
+  - Every change passing through the production pipeline is deployed to users.
+
+  - No human intervention.
+
+  - Only failed tests prevent deployment.
+
+- **Benefits:**
+  - Accelerates feedback loop with customers.
+
+  - Eliminates traditional “release days.”
+
+- **Example:** Changes are automatically released to production without manual steps.
+
+In summary:
+
+- **CI** ensures frequent code integration and testing.
+
+- **CD** extends CI by automating deployment to testing or production.
+
+- **Continuous Deployment** goes even further, releasing changes directly to users without manual intervention
+
 
 
 
